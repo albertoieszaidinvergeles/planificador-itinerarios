@@ -1,0 +1,20 @@
+# Secretos: nunca se suben
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Vercel
+.vercel/
+
+# Claves y certificados
+*.pem
+*.key
