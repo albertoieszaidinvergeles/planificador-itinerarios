@@ -6,8 +6,7 @@ devuelve un plan de un día usando **una API de inteligencia artificial**, en **
 pantalla**.
 
 **Asignatura:** Desarrollo de componentes software para sistemas de aprendizaje automático · UD1 «Mini aplicación web con una API de IA».
-**Miembros:** _(pendiente: nombres e identidades Git de 2–3 integrantes)_
-**Docente:** _(pendiente)_
+**Miembros:** Alberto Ortiz Sánchez y Manuel Montalban Arco
 
 > **Regla de alcance:** una sola pantalla, un solo formulario, una sola función útil y una
 > sola API de IA (OpenRouter). **Cero persistencia** (sin BD, sin `localStorage`), sin CRUD
