@@ -10,7 +10,7 @@ pantalla**.
 
 > **Regla de alcance:** una sola pantalla, un solo formulario, una sola función útil y una
 > sola API de IA (OpenRouter). **Cero persistencia** (sin BD, sin `localStorage`), sin CRUD
-> y sin pantallas adicionales. Ver `planificador-itinerarios-ers.md`.
+> y sin pantallas adicionales. Ver [`docs/ERS.md`](docs/ERS.md).
 
 ## Las dos aplicaciones
 
@@ -26,10 +26,10 @@ pantalla**.
 ```text
 planificador-itinerarios/
 ├── README.md                                        # este archivo
-├── planificador-itinerarios-documento-tecnico.md    # documento técnico v3 (arquitectura, contrato, despliegues)
-├── planificador-itinerarios-ers.md                  # ERS (entregable «ERS», plantilla del docente)
 ├── Figma/                                           # bocetos de la pantalla única
 ├── docs/
+│   ├── ERS.md            # ERS (entregable «ERS», plantilla del docente)
+│   ├── planificador-itinerarios-documento-tecnico.md  # documento técnico v3 (arquitectura, contrato, despliegues)
 │   ├── proceso.md        # decisiones e incidencias (a medida que ocurren)
 │   ├── pruebas.md        # cómo se ejecutan, matriz y prueba real documentada
 │   ├── comparativa.md    # App 1 vs App 2 (tiempo, calidad, errores, mantenibilidad, IA)
@@ -43,9 +43,8 @@ planificador-itinerarios/
 └── presentacion/         # defensa.pptx
 ```
 
-> La documentación vive en la raíz (decisión del equipo; el enunciado permite justificar
-> cambios respecto a su estructura orientativa). Las carpetas de código se crean al empezar
-> cada fase.
+> Toda la documentación vive en `docs/`, con la ERS en `docs/ERS.md` como exige el
+> enunciado. Las carpetas de código se crean al empezar cada fase.
 
 ## Variables de entorno (sin valores secretos)
 
@@ -119,8 +118,8 @@ Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) e
 
 | Documento | Contenido |
 |---|---|
-| [Documento técnico](planificador-itinerarios-documento-tecnico.md) | Restricciones, idea, arquitectura, contrato HTTP, App 1, App 2 (Spec Kit + Clerk), Docker/EC2, seguridad, hitos Git y **mapa de la rúbrica** |
-| [ERS](planificador-itinerarios-ers.md) | Especificación de requisitos según plantilla: OBJ, RES, 5 RF + 4 RNF con criterios de aceptación, trazabilidad y Anexo C (Clerk) |
+| [Documento técnico](docs/planificador-itinerarios-documento-tecnico.md) | Restricciones, idea, arquitectura, contrato HTTP, App 1, App 2 (Spec Kit + Clerk), Docker/EC2, seguridad, hitos Git y **mapa de la rúbrica** |
+| [ERS](docs/ERS.md) | Especificación de requisitos según plantilla: OBJ, RES, 5 RF + 4 RNF con criterios de aceptación, trazabilidad y Anexo C (Clerk) |
 | [docs/proceso.md](docs/proceso.md) | Decisiones e incidencias a medida que ocurren |
 | [docs/pruebas.md](docs/pruebas.md) | Matriz de pruebas, comandos y prueba real documentada |
 | [docs/comparativa.md](docs/comparativa.md) | Comparación App 1 vs App 2 con evidencias |

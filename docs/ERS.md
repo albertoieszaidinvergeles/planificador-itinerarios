@@ -10,16 +10,15 @@
 | Campo | Valor |
 |---|---|
 | Nombre del proyecto | Planificador de itinerarios (mini app web con una API de IA) |
-| Autores | Pendiente (nombre y apellidos de los integrantes) |
-| Curso y grupo | Aprendizaje automático: gestión de datos y entrenamiento — grupo de 2–3 integrantes |
+| Autores | Alberto Ortiz y Manuel Montalbán |
+| Curso y grupo | Aprendizaje automático: gestión de datos y entrenamiento — grupo de 2 integrantes |
 | Asignatura o módulo | Desarrollo de componentes software para sistemas de aprendizaje automático (UD1) |
 | Docente | Pendiente |
 | Fecha | 08/10/2026 |
 | Versión | 2.0 |
 | Estado | Borrador |
 
-> En el repositorio de la práctica esta versión se entrega como `docs/ERS.md`; aquí se
-> conserva en la raíz junto al documento técnico por decisión del equipo.
+> Este documento se entrega como `docs/ERS.md`, ubicación que exige el enunciado.
 
 ### Historial de cambios
 
@@ -278,6 +277,8 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 
 - **CA-RF02-01:** Dado un cuerpo con `gustos` de 201 caracteres, cuando se envía `POST /api/plan`, entonces la respuesta es `422` y el cliente de IA **no** recibe ninguna llamada (verificado con mock).
 - **CA-RF02-02:** Dado un cuerpo con `fecha` anterior a hoy, cuando se envía la petición, entonces la respuesta es `422` con el error de campo y no se consulta la IA.
+- **CA-RF02-03:** Dado un cuerpo con gustos formado solo por espacios, cuando se envía POST /api/plan, entonces la respuesta es 422 y no se consulta la IA.
+- **CA-RF02-04:** Dado un cuerpo con gustos de exactamente 200 caracteres, cuando se envía la petición, entonces se acepta y no se devuelve 422.
 
 #### RF-03. Generar el plan con una única llamada a la API de IA y devolver el contrato
 
@@ -298,6 +299,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 **Criterios de aceptación:**
 
 - **CA-RF03-01:** Dada una entrada válida con el proveedor simulado, cuando se ejecuta la petición, entonces la respuesta es `200`, el cuerpo contiene `resultado` y el mock registra **una sola** llamada.
+- **CA-RF03-04:** Dado el proveedor simulado para devolver una respuesta vacía o con formato inesperado, cuando se procesa una entrada válida, entonces la respuesta es 502 con codigo: IA_NO_DISPONIBLE.
 - **CA-RF03-02:** Dado el proveedor simulado para que falle, cuando se procesa una entrada válida, entonces la respuesta es `502` con `codigo: IA_NO_DISPONIBLE`, mensaje genérico y ningún detalle interno.
 - **CA-RF03-03:** Dado el proveedor simulado para que no responda dentro de 20 s, cuando se procesa la entrada, entonces la respuesta es `504` con `codigo: IA_TIMEOUT`.
 
@@ -312,7 +314,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 | Fuente | FUE-01 |
 | Precondiciones | El backend ha respondido 200 o un error controlado. |
 | Entradas | `resultado` (texto) o `error` (código y mensaje). |
-| Comportamiento esperado | En `200` se muestra el plan como texto con formato conservado; en `422/401/502/504/500` se muestra un mensaje comprensible y la opción de reintentar. |
+| Comportamiento esperado | En `200` se muestra el plan como texto con formato conservado; en `422/401/502/504/500` se muestra un mensaje comprensible y la opción de reintentar. Junto al plan se muestra siempre un aviso visible: texto generado por IA, orientativo; comprobar sitios y horarios. |
 | Salidas y postcondiciones | Solo el último resultado permanece visible; nada se almacena (RES-03). |
 | Errores o alternativas | Cuerpo que no cumple el contrato → estado de error genérico; la IA no puede insertar marcado ejecutable. |
 | Dependencias | RF-01, RF-03, RF-05 **[App 2]** |
@@ -322,6 +324,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 - **CA-RF04-01:** Dado un plan mostrado, cuando el usuario envía otro formulario válido y el backend responde 200, entonces la pantalla muestra **solo** el nuevo resultado, sin listados anteriores ni recarga de la página.
 - **CA-RF04-02:** Dada una respuesta 502, cuando la recibe el frontend, entonces se muestra el mensaje de error acordado y un botón de reintento que vuelve al estado entrada sin perder los datos del formulario.
 - **CA-RF04-03:** Dado un `resultado` que contiene marcado HTML, cuando se pinta en la pantalla, entonces se muestra como texto literal (sin ejecución de etiquetas ni scripts).
+- **CA-RF04-04:** Dado un resultado 200, cuando se muestra el plan, entonces aparece junto a él el aviso de contenido orientativo no verificado.
 
 #### RF-05. Autenticar con Clerk y rechazar peticiones no autenticadas **[App 2]**
 
@@ -434,11 +437,11 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 | Requisito | Objetivo o necesidad de origen | Criterio de aceptación | ID de prueba | Método y datos de comprobación | Resultado esperado |
 |---|---|---|---|---|---|
 | RF-01 | OBJ-01 / FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 | Prueba manual de la SPA con DevTools abiertas: envío válido, doble clic y campo vacío | Estados correctos, una sola petición y validación en cliente sin red |
-| RF-02 | OBJ-02 / FUE-01 | CA-RF02-01, CA-RF02-02 | PR-02 | pytest con `gustos` de 201 caracteres y `fecha` pasada; mock del cliente de IA | `422` y **cero** llamadas al mock |
-| RF-03 | OBJ-01, OBJ-02 | CA-RF03-01, CA-RF03-02, CA-RF03-03 | PR-03 | pytest con mock en modos: éxito, fallo y timeout de 20 s | `200` + una llamada; `502`; `504` con el JSON acordado |
-| RF-04 | OBJ-01, OBJ-03 | CA-RF04-01, CA-RF04-02, CA-RF04-03 | PR-04 | Prueba manual: dos envíos seguidos, un error 502 y un resultado con `<script>` de prueba | Solo el último resultado, reintento funcional y HTML como texto |
+| RF-02 | OBJ-02 / FUE-01 | CA-RF02-01, CA-RF02-02, CA-RF02-03, CA-RF02-04 | PR-02 | pytest con mock del cliente de IA: `gustos` de 201 caracteres, `fecha` pasada, `gustos` solo con espacios y `gustos` de 200 caracteres | `422` y **cero** llamadas al mock en los tres primeros; el de 200 caracteres se acepta (no `422`) |
+| RF-03 | OBJ-01, OBJ-02 | CA-RF03-01, CA-RF03-02, CA-RF03-03, CA-RF03-04 | PR-03 | pytest con mock en modos: éxito, fallo, timeout y respuesta vacía o inesperada | `200` + una llamada; `502`; `504`; `502` con el JSON acordado |
+| RF-04 | OBJ-01, OBJ-03 | CA-RF04-01, CA-RF04-02, CA-RF04-03, CA-RF04-04 | PR-04 | Prueba manual: dos envíos seguidos, un error 502, un resultado con `<script>` de prueba y comprobación del aviso | Solo el último resultado, reintento funcional, HTML como texto y aviso de contenido orientativo visible |
 | RF-05 **[App 2]** | OBJ-04, RES-10 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 | pytest con verificador simulado (sin cabecera, token firmado por otra clave, token correcto) + una prueba real de acceso y cierre de sesión | `401` con cero llamadas a IA en los dos primeros; flujo normal en el tercero |
-| RNF-01 | OBJ-02 | Criterio de la sección 4 | PR-06 | Mock que demora > 20 s; cronometrar la respuesta | `504` dentro del límite, UI sin bloqueo |
+| RNF-01 | OBJ-02 | Criterio de la sección 4 | PR-06 | pytest con mock que lanza directamente el timeout; además, prueba manual cronometrada | `504` dentro del límite, UI sin bloqueo |
 | RNF-02 | OBJ-03, RES-12 | Criterio de la sección 4 | PR-07 | Buscar claves en `dist/`, `.env.example` e historial Git; revisar `.gitignore` | Cero secretos reales; solo valores ficticios |
 | RNF-03 | OBJ-01 | Criterio de la sección 4 | PR-08 | Observación de usuario nuevo en URL desplegada, teclado y móvil | Tarea completa en una pantalla, foco y mensajes visibles |
 | RNF-04 | OBJ-02 | Criterio de la sección 4 | PR-09 | pytest con mock en fallo y timeout; inspección del cuerpo de respuesta | `502/504` con `codigo`+`mensaje`, sin stack trace; suite en verde sin internet |
