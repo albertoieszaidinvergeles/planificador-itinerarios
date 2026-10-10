@@ -126,6 +126,8 @@ Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) e
 | [docs/comparativa.md](docs/comparativa.md) | Comparación App 1 vs App 2 con evidencias |
 | [docs/despliegues.md](docs/despliegues.md) | Vercel (2 proyectos por app), CLI, Clerk, Docker y EC2 |
 | [docs/uso-ia.md](docs/uso-ia.md) | Registro del uso de IA: qué se aceptó, qué se rechazó, verificación humana |
+| [Propuesta de fases](docs/PropuestaFases.pdf) | Planificación por fases del proyecto |
+| [Resumen del enunciado](docs/ResumenEnunciado.pdf) | Resumen de los requisitos de la práctica |
 
 ## Hitos de la entrega
 
