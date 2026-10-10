@@ -553,7 +553,7 @@ No se exige un número literal de commits, pero **un único commit final no demu
 Etiquetas recomendadas: `app1-final`, `entrega-ud1`. Sin secretos en el historial.
 
 **Documentación asociada** (repartida según el enunciado): `README.md`, ERS
-(este documento convive con `planificador-itinerarios-ers.md`), `proceso.md`, `pruebas.md`,
+(`ERS.md`, en la misma carpeta que este documento), `proceso.md`, `pruebas.md`,
 `comparativa.md`, `despliegues.md`, `uso-ia.md`, `diagramas/` y `evidencias/` (datos
 ficticios y capturas **sin secretos**).
 
@@ -587,7 +587,7 @@ rúbrica puntúa lo que se puede mostrar y reproducir.*
 
 | Criterio | Peso | Exige «Excelente» (resumen) | Dónde se demuestra |
 |---|---:|---|---|
-| ERS y análisis | 15 % | Plantilla fiel, RF/RNF verificables, errores y trazabilidad completa, diagramas útiles, «No aplica» motivados | `planificador-itinerarios-ers.md` (5 RF + 4 RNF con «Dado/cuando/entonces», sección 8 trazabilidad, 2 diagramas Mermaid con frase explicativa, 10.1 con motivaciones) |
+| ERS y análisis | 15 % | Plantilla fiel, RF/RNF verificables, errores y trazabilidad completa, diagramas útiles, «No aplica» motivados | `ERS.md` (5 RF + 4 RNF con «Dado/cuando/entonces», sección 8 trazabilidad, 2 diagramas Mermaid con frase explicativa, 10.1 con motivaciones) |
 | Aplicación 1 | 20 % | Flujo completo y estable, FastAPI + JSON, SPA Vue con Tailwind, validación/espera/error | Código de `app1/` siguiendo §5; demo del flujo (entrada válida → resultado) |
 | Calidad técnica, tests y Git | 15 % | Pruebas aisladas con mocks, dependencias reproducibles, secretos protegidos, historial incremental identificable | `app1/backend/tests/` + `docs/pruebas.md` (§5.5); `requirements.txt`/lockfiles; `.gitignore` + `.env.example` (§8); hitos H0–H7 (§9) |
 | App 2, Spec Kit e IA | 15 % | Proyecto nuevo equivalente, spec/plan/tareas **previos** al código, revisión humana y comparativa con evidencias | `app2/.specify/` y `app2/specs/` con fecha de commit anterior al código (§6.1); `docs/uso-ia.md`; `docs/comparativa.md` |
@@ -616,7 +616,7 @@ enunciado; el detalle vive en `README.md`):
 
 - Enunciado: `PR01-UD1 · Mini aplicación web con una API de IA` (el docente).
 - Plantilla ERS: `plantillaERS.md` del docente → versión del equipo
-  (`planificador-itinerarios-ers.md`).
+  (`ERS.md`).
 - FastAPI en Vercel: <https://vercel.com/docs/frameworks/backend/fastapi> · CLI: <https://vercel.com/docs/cli> · Variables de entorno: <https://vercel.com/docs/environment-variables>
 - GitHub Spec Kit: <https://github.com/github/spec-kit>
 - Clerk: tokens de sesión <https://clerk.com/docs/guides/sessions/session-tokens> · verificación manual de JWT <https://clerk.com/docs/guides/sessions/manual-jwt-verification>
