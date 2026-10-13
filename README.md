@@ -121,6 +121,7 @@ Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) e
 | [Documento técnico](docs/planificador-itinerarios-documento-tecnico.md) | Restricciones, idea, arquitectura, contrato HTTP, App 1, App 2 (Spec Kit + Clerk), Docker/EC2, seguridad, hitos Git y **mapa de la rúbrica** |
 | [ERS](docs/ERS.md) | Especificación de requisitos según plantilla: OBJ, RES, 5 RF + 4 RNF con criterios de aceptación, trazabilidad y Anexo C (Clerk) |
 | [docs/proceso.md](docs/proceso.md) | Decisiones e incidencias a medida que ocurren |
+| [docs/changelog.md](docs/changelog.md) | Registro de cambios y tiempo dedicado por hito |
 | [docs/pruebas.md](docs/pruebas.md) | Matriz de pruebas, comandos y prueba real documentada |
 | [docs/comparativa.md](docs/comparativa.md) | Comparación App 1 vs App 2 con evidencias |
 | [docs/despliegues.md](docs/despliegues.md) | Vercel (2 proyectos por app), CLI, Clerk, Docker y EC2 |

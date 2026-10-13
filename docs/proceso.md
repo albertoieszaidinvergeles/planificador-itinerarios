@@ -13,6 +13,8 @@ innecesarias.
 | 08/10/2026 | Decisión | Validación de campos en **FastAPI/Pydantic** (uvicorn solo sirve); contrato con códigos 200/422/502/504 y 401 en App 2 | Documento técnico §4 y §5.4 | Equipo |
 | 08/10/2026 | Decisión | **Dos aplicaciones**: App 1 manual (Vercel) y App 2 desde cero con Spec Kit + Clerk (Vercel y Docker/EC2). ERS base común + Anexo C para Clerk | ERS leyenda de alcance y Anexo C | Equipo |
 | 08/10/2026 | Decisión | Documentación en la raíz (README, ERS, documento técnico) y `docs/` para proceso/pruebas/comparativa/despliegues/uso-ia | README §Estructura | Equipo |
+| 11/10/2026 | Decisión | La ERS se renombra a `docs/ERS.md` (lo exige el enunciado) y toda la documentación pasa a `docs/`. Sustituye a la decisión del 08/10 de tener la documentación en la raíz | PR #3; README §Estructura | Manuel |
+| 13/10/2026 | Decisión | **Reparto de App 1:** Manuel se encarga del Backend (`main.py`, `ia.py`, tests) y Alberto del Frontend. Posiblemente en la App 2 se intercambian los papeles para que los dos conozcan todo el flujo | `docs/PropuestaFases.md`; PR de esta decisión revisada por Alberto | Manuel |
 | | Incidencia | | | |
 
 ## Problemas abiertos
