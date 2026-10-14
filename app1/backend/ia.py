@@ -45,11 +45,3 @@ def consultar_ia(ciudad: str, fecha: str, personas: int, gustos: str) -> str:
     datos = respuesta.json()
     return datos["choices"][0]["message"]["content"]
 
-# Prueba:
-# if __name__ == "__main__":
-#     print(consultar_ia("Granada", "2026-10-20", 2, "museos y tapas"))
-
-
-
-
-
