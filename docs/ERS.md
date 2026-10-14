@@ -451,11 +451,12 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 | ID | Duda o decisión pendiente | Requisitos afectados | Responsable de resolverla | Fecha prevista | Resolución |
 |---|---|---|---|---|---|
 | PEN-01 | Integrantes, curso/grupo y datos del docente en la cabecera | Datos del documento | Equipo | Antes de entregar | Pendiente |
-| PEN-02 | Revisión de alcance de la idea con el docente («planificador de itinerarios» simplificado) | SUP-01, 1.3 | Docente / equipo | Primera sesión | Pendiente |
-| PEN-03 | Modelo `:free` definitivo de OpenRouter y créditos disponibles | RF-03, DEP-01 | Equipo | Fase backend (H1) | Pendiente |
+| PEN-02 | Revisión de alcance de la idea con el docente («planificador de itinerarios» simplificado) | SUP-01, 1.3 | Docente / equipo | Primera sesión | Resuelta 14/10/2026: el docente acepta la idea |
+| PEN-03 | Modelo `:free` definitivo de OpenRouter y créditos disponibles | RF-03, DEP-01 | Equipo | Fase backend (H1) | Resuelta 13/10/2026: `nvidia/nemotron-3-super-120b-a12b:free` (ver `docs/proceso.md`) |
 | PEN-04 | Fecha de entrega, medio (Moodle) y duración de la demo | RES-13, DEP-04 | Docente | En clase | Pendiente |
 | PEN-05 | **[App 2]** Acceso a AWS, región y presupuesto; desactivación de recursos al finalizar | RES-11, SUP-04 | Docente / equipo | Antes de H11 | Pendiente |
 | PEN-06 | **[App 2]** Configuración final de Clerk (orígenes, Google como proveedor) y URLs de EC2 | RF-05, DEP-03 | Equipo | Antes de H10 | Pendiente |
+| PEN-07 | Qué debe mostrar el backend por terminal (registro de peticiones) | RNF-02, RNF-04 | Docente / equipo | Fase backend (H2) | Resuelta 14/10/2026: nada propio; solo el access log de uvicorn, sin prompt, respuesta ni clave |
 
 ## 10. Revisión y conformidad
 

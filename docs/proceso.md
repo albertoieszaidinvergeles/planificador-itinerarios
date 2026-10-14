@@ -18,12 +18,16 @@ innecesarias.
 | 13/10/2026 | Incidencia | Primera llamada real a OpenRouter con `google/gemma-4-26b-a4b-it:free` y `google/gemma-4-31b-it:free`: ambas devuelven `429 Too Many Requests` | Causa: los dos Gemma gratuitos dependen solo de Google AI Studio, que estaba saturado; la cuenta no registró consumo (0/50 peticiones diarias). Se cambia de modelo. En H2, un 429 se traducirá a `502 IA_NO_DISPONIBLE` | Manuel |
 | 13/10/2026 | Decisión | **Modelo de IA:** `nvidia/nemotron-3-super-120b-a12b:free` (proveedor Nvidia con disponibilidad del 100 % en ese momento; tamaño intermedio, propósito general). Reserva: `nvidia/nemotron-3.5-lightning:free`. Cierra **PEN-03** | Prueba real en `docs/pruebas.md`: plan en español legible, ~14 s | Manuel |
 | 13/10/2026 | Decisión | **Forma de trabajar con IA en App 1:** Codigo escrito a mano, comprendido y ejecutado antes de seguir | Registro en `docs/uso-ia.md` | Manuel |
-| | Incidencia | | | |
+| 14/10/2026 | Decisión | **PEN-02 resuelta:** aceptada la idea del planificador de itinerarios simplificado (solo IA, sin APIs externas) | Respuesta del profesor; ERS §9 | Manuel |
+| 14/10/2026 | Decisión | **PEN-07 resuelta:** no hace falta mostrar nada por terminal. Sin logging propio ni `print` de prompt, respuesta o clave; basta el access log de uvicorn, que no incluye contenido | prueba en `docs/pruebas.md` (14/10); ERS §9 | Manuel |
+| 14/10/2026 | Decisión | Se desactiva el razonamiento del modelo (`"reasoning": {"enabled": false}`) en la llamada a OpenRouter: la respuesta baja de ~14 s a ~5 s. Se mantiene `AI_TIMEOUT=20` | Prueba en `docs/pruebas.md` (14/10) | Manuel |
+| 15/10/2026 | Incidencia | Al probar el 502 con `AI_MODEL=...:free-xxx`, OpenRouter respondió normalmente: probablemente trata lo que va detrás de `:` como variante y lo tolera | Se probó con `modelo-que-no-existe` → `502 IA_NO_DISPONIBLE`. El nombre del modelo debe copiarse exacto | Manuel |
 
 ## Problemas abiertos
 
 | Problema | Origen | Solución prevista | Estado |
-| Respuesta de ~14 s con un timeout de 20 s: poco margen | Prueba real H1 | En H2, medir con el razonamiento del modelo desactivado; si no basta, subir `AI_TIMEOUT` y actualizar la ERS | Abierto |
+|---|---|---|---|
+| Respuesta de ~14 s con un timeout de 20 s: poco margen | Prueba real H1 | En H2, medir con el razonamiento del modelo desactivado; si no basta, subir `AI_TIMEOUT` y actualizar la ERS | Cerrado 14/10/2026: ~5 s con el razonamiento desactivado; se mantiene `AI_TIMEOUT=20` |
 | Elegir modelo `:free` definitivo y comprobar su cuota | Fase backend (H1) | Probar con petición real manual y documentar en `docs/pruebas.md` | Cerrado 13/10/2026: `nvidia/nemotron-3-super-120b-a12b:free` (ver Registro) |
 | Configurar CORS/Vercel para que frontend y backend se encuentren | Fase H7 | Dos proyectos de Vercel con `VITE_API_BASE_URL` y origen permitido | Abierto |
 | | | | |
