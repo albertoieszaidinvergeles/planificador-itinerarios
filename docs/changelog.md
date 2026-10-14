@@ -15,10 +15,13 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 11/10/2026 | Alberto | H0 | Ambas | Versiones Markdown de `PropuestaFases` y `ResumenEnunciado` | | commit `2f1781a` |
 | 13/10/2026 | Manuel | H0 | Ambas | Creación de este registro y reparto de App 1 en `proceso.md` | 20 | `docs/changelog-y-reparto` |
 | 13/10/2026 | Manuel | H1 | App 1 | Entorno virtual, `requirements.txt`, `.env.example` e `ia.py` (primera llamada real a OpenRouter); elección del modelo | 180 | `feat/backend-minimo` |
-| 14/10/2026 | Manuel | H1 | App 1 | `main.py` con `POST /api/plan` (llamada a la IA y respuesta según el contrato); pruebas en `/docs`; registro en `uso-ia.md` | (60) | `feat/backend-minimo` |
+| 14/10/2026 | Manuel | H1 | App 1 | `main.py` con `POST /api/plan` (llamada a la IA y respuesta según el contrato); pruebas en `/docs`; registro en `uso-ia.md` | 60 | `feat/backend-minimo` |
+| 14-15/10/2026 | Manuel | H2 | App 1 | `ia.py` con errores propios (`IAError`, `IATimeout`) y razonamiento desactivado; `main.py` con límites de entrada, errores 502/504/500 según el contrato y CORS desde `CORS_ORIGINS`; pruebas manuales y documentación | 60 | `feat/contrato-errores` |
 
 ## Tiempo total por hito
 
 | Hito | Manuel (min) | Alberto (min) | Total |
 |---|---|---|---|
-| H0 | 360 | | |
+| H0 | 120 | | 120 |
+| H1 | 240 | | 240 |
+| H2 | 60 | | 60 |
