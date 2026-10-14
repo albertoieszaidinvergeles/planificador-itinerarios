@@ -40,7 +40,9 @@ pytest -v
 
 | Fecha | Comando / herramienta | Entorno | Respuesta (resumen) | Evidencia |
 |---|---|---|---|---|
-| _(pendiente H1)_ | p. ej. `curl` a `POST /api/plan` con entrada válida | local | _(pendiente)_ | _(captura en `docs/evidencias/`)_ |
+| 13/10/2026 | `python app1/backend/ia.py` (prueba directa de `consultar_ia`) con Sevilla / 2026-10-20 / 2 / «museos y tapas» | local, `google/gemma-4-26b-a4b-it:free` y `google/gemma-4-31b-it:free` | `429 Too Many Requests` en ambos: proveedor único (Google AI Studio) saturado; la cuenta no registró consumo (0/50 peticiones diarias) | Salida de terminal |
+| 13/10/2026 | `python app1/backend/ia.py` con los mismos datos | local, `nvidia/nemotron-3-super-120b-a12b:free` | Plan de un día en español, texto legible; **~14 s** de respuesta (timeout configurado: 20 s) | Salida de terminal |
+| 14/10/2026 | `uvicorn main:app --reload` y `POST /api/plan` desde `http://127.0.0.1:8000/docs` con Sevilla / 2026-10-20 / 2 / «museos y tapas»; repetida sin el campo `gustos` | local, `nvidia/nemotron-3-super-120b-a12b:free` | Caso válido: `200` con `{"resultado": "..."}` (~14 s). Sin `gustos`: `422` inmediato, sin llamada a la IA | Página `/docs` de FastAPI |
 
 ## Comprobación de la interfaz (Fase D)
 

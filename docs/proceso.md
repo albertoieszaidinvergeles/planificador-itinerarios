@@ -15,13 +15,16 @@ innecesarias.
 | 08/10/2026 | Decisión | Documentación en la raíz (README, ERS, documento técnico) y `docs/` para proceso/pruebas/comparativa/despliegues/uso-ia | README §Estructura | Equipo |
 | 11/10/2026 | Decisión | La ERS se renombra a `docs/ERS.md` (lo exige el enunciado) y toda la documentación pasa a `docs/`. Sustituye a la decisión del 08/10 de tener la documentación en la raíz | PR #3; README §Estructura | Manuel |
 | 13/10/2026 | Decisión | **Reparto de App 1:** Manuel se encarga del Backend (`main.py`, `ia.py`, tests) y Alberto del Frontend. Posiblemente en la App 2 se intercambian los papeles para que los dos conozcan todo el flujo | `docs/PropuestaFases.md`; PR de esta decisión revisada por Alberto | Manuel |
+| 13/10/2026 | Incidencia | Primera llamada real a OpenRouter con `google/gemma-4-26b-a4b-it:free` y `google/gemma-4-31b-it:free`: ambas devuelven `429 Too Many Requests` | Causa: los dos Gemma gratuitos dependen solo de Google AI Studio, que estaba saturado; la cuenta no registró consumo (0/50 peticiones diarias). Se cambia de modelo. En H2, un 429 se traducirá a `502 IA_NO_DISPONIBLE` | Manuel |
+| 13/10/2026 | Decisión | **Modelo de IA:** `nvidia/nemotron-3-super-120b-a12b:free` (proveedor Nvidia con disponibilidad del 100 % en ese momento; tamaño intermedio, propósito general). Reserva: `nvidia/nemotron-3.5-lightning:free`. Cierra **PEN-03** | Prueba real en `docs/pruebas.md`: plan en español legible, ~14 s | Manuel |
+| 13/10/2026 | Decisión | **Forma de trabajar con IA en App 1:** Codigo escrito a mano, comprendido y ejecutado antes de seguir | Registro en `docs/uso-ia.md` | Manuel |
 | | Incidencia | | | |
 
 ## Problemas abiertos
 
 | Problema | Origen | Solución prevista | Estado |
-|---|---|---|---|
-| Elegir modelo `:free` definitivo y comprobar su cuota | Fase backend (H1) | Probar con petición real manual y documentar en `docs/pruebas.md` | Abierto (PEN-03) |
+| Respuesta de ~14 s con un timeout de 20 s: poco margen | Prueba real H1 | En H2, medir con el razonamiento del modelo desactivado; si no basta, subir `AI_TIMEOUT` y actualizar la ERS | Abierto |
+| Elegir modelo `:free` definitivo y comprobar su cuota | Fase backend (H1) | Probar con petición real manual y documentar en `docs/pruebas.md` | Cerrado 13/10/2026: `nvidia/nemotron-3-super-120b-a12b:free` (ver Registro) |
 | Configurar CORS/Vercel para que frontend y backend se encuentren | Fase H7 | Dos proyectos de Vercel con `VITE_API_BASE_URL` y origen permitido | Abierto |
 | | | | |
 
