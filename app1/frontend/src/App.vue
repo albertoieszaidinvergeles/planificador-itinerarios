@@ -10,7 +10,7 @@
  *   resultado→ texto del plan
  *   error    → mensaje controlado del backend + reintento
  */
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 /* ------------------------------------------------------------------ *
  * Configuración
@@ -21,6 +21,18 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').
 
 // Límites del contrato (idénticos a los de Pydantic en el backend).
 const LIMITES = { ciudad: 80, gustos: 200, personasMin: 1, personasMax: 20 }
+
+/*
+ * Compañía con la que se hace el plan. NO es un campo del contrato: se añade
+ * al final de `gustos` antes de enviar, así el backend y la IA lo reciben
+ * sin cambiar POST /api/plan.
+ * Reglas: con 1 persona no se ofrece; «Pareja» solo vale con exactamente 2.
+ */
+const OPCIONES_COMPANIA = [
+  { valor: 'amigos', texto: 'Amigos', sufijo: '(van con amigos)' },
+  { valor: 'familia', texto: 'Familia', sufijo: '(van en familia)' },
+  { valor: 'pareja', texto: 'Pareja', sufijo: '(van en pareja)' },
+]
 
 /* ------------------------------------------------------------------ *
  * Estado de la pantalla
@@ -33,6 +45,7 @@ const avisoGeneral = ref('') // avisos en estado entrada (p. ej. validación 422
 const resultado = ref('') // texto devuelto por el backend (texto plano, nunca HTML)
 const errorServidor = reactive({ codigo: '', mensaje: '' })
 const temaOscuro = ref(true) // el boceto del Figma es oscuro; se puede cambiar a claro
+const compania = ref('') // '' | amigos | familia | pareja
 
 // Mínimo del campo fecha: hoy (el backend rechaza fechas pasadas con 422).
 const fechaMin = hoyISO()
@@ -63,7 +76,94 @@ const resumen = computed(() => ({
   fecha: fechaLegible(formulario.fecha),
   personas: `${formulario.personas} ${formulario.personas === 1 ? 'persona' : 'personas'}`,
   gustos: formulario.gustos.trim() || '—',
+  compania: etiquetaCompania() || '—',
 }))
+
+/* ------------------------------------------------------------------ *
+ * Compañía (se envía dentro de gustos)
+ * ------------------------------------------------------------------ */
+
+function etiquetaCompania() {
+  const opcion = OPCIONES_COMPANIA.find((item) => item.valor === compania.value)
+  return opcion ? opcion.texto : ''
+}
+
+/** Una opción está disponible según el número de personas (RA-1 / RA-2). */
+function companiaDisponible(valor) {
+  const personas = Number(formulario.personas)
+  if (!Number.isFinite(personas) || personas < 2) return false // sola persona: sin compañía
+  if (valor === 'pareja' && personas > 2) return false // la pareja es exactamente 2
+  return true
+}
+
+function elegirCompania(valor) {
+  if (!companiaDisponible(valor)) return
+  // Volver a pulsar la opción activa la quita.
+  compania.value = compania.value === valor ? '' : valor
+}
+
+// Si cambian las personas y la selección deja de ser válida, se limpia.
+watch(
+  () => formulario.personas,
+  () => {
+    if (compania.value && !companiaDisponible(compania.value)) compania.value = ''
+  },
+)
+
+/** Pista debajo de las opciones: explica por qué están desactivadas. */
+const pistaCompania = computed(() => {
+  const personas = Number(formulario.personas)
+  if (!Number.isFinite(personas) || personas < 2) {
+    return 'Con 1 persona no hace falta indicar compañía.'
+  }
+  if (personas === 2) return 'Sois dos: podéis elegir cualquiera.'
+  return 'Opcional. «Pareja» solo se activa si sois exactamente dos.'
+})
+
+/** Texto de gustos que se envía de verdad: gustos + compañía (si la hay). */
+const textoGustos = computed(() => {
+  const base = formulario.gustos.trim()
+  const opcion = OPCIONES_COMPANIA.find((item) => item.valor === compania.value)
+  return opcion ? `${base} ${opcion.sufijo}`.trim() : base
+})
+
+/*
+ * Formato del resultado.
+ * La IA devuelve TEXTO plano con «Mañana: …», «Tarde: …» y «Noche: …».
+ * Aquí solo se parte por esas etiquetas para pintar tres tarjetas: el contenido
+ * se interpola con {{ }} (texto literal), NUNCA con v-html (R-14).
+ * Si el texto no trae esas etiquetas, se muestra tal cual, sin romper nada.
+ */
+const plan = computed(() => {
+  const texto = resultado.value
+  if (!texto) return { intro: '', bloques: [] }
+
+  const marcas = []
+  const patron = /(mañana|tarde|noche)\s*:/gi
+  let coincidencia = null
+  while ((coincidencia = patron.exec(texto)) !== null) {
+    const nombre = coincidencia[1].toLowerCase()
+    marcas.push({
+      titulo: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+      inicio: coincidencia.index,
+      fin: coincidencia.index + coincidencia[0].length,
+    })
+  }
+
+  // Sin al menos dos franjas reconocibles: texto completo, sin interpretar.
+  if (marcas.length < 2) return { intro: '', bloques: [] }
+
+  const bloques = marcas
+    .map((marca, i) => ({
+      titulo: marca.titulo,
+      cuerpo: texto
+        .slice(marca.fin, i + 1 < marcas.length ? marcas[i + 1].inicio : texto.length)
+        .trim(),
+    }))
+    .filter((bloque) => bloque.cuerpo)
+
+  return { intro: texto.slice(0, marcas[0].inicio).trim(), bloques }
+})
 
 /** Alterna entre tema oscuro (Figma) y claro. Solo en memoria. */
 function cambiarTema() {
@@ -118,12 +218,14 @@ function validar() {
   }
 
   // Los gustos se envían JUNTO con la compañía: se valida el texto final.
-  const gustos = formulario.gustos.trim()
-  if (!gustos) {
+  if (!formulario.gustos.trim()) {
     marcarCampo('gustos', 'Cuéntanos qué os apetece (p. ej. «museos y tapas»).')
     correcto = false
-  } else if (gustos.length > LIMITES.gustos) {
-    marcarCampo('gustos', `Máximo ${LIMITES.gustos} caracteres.`)
+  } else if (textoGustos.value.length > LIMITES.gustos) {
+    marcarCampo(
+      'gustos',
+      `Los gustos, con la compañía indicada, superan los ${LIMITES.gustos} caracteres.`,
+    )
     correcto = false
   }
 
@@ -161,7 +263,7 @@ async function enviar() {
         ciudad: formulario.ciudad.trim(),
         fecha: formulario.fecha,
         personas: Number(formulario.personas),
-        gustos: formulario.gustos.trim(),
+        gustos: textoGustos.value, // gustos + compañía (p. ej. «museos (van con amigos)»)
       }),
     })
 
@@ -170,7 +272,7 @@ async function enviar() {
     if (respuesta.ok) {
       // Solo se acepta el contrato {"resultado": "..."}.
       if (datos && typeof datos.resultado === 'string' && datos.resultado.trim()) {
-        resultado.value = datos.resultado.trim()
+        resultado.value = limpiarTexto(datos.resultado.trim())
         estado.value = 'resultado'
       } else {
         mostrarError('RESPUESTA_INESPERADA', 'El servidor ha devuelto una respuesta inesperada. Inténtalo de nuevo.')
@@ -196,6 +298,15 @@ function mostrarError(codigo, mensaje) {
   errorServidor.codigo = codigo
   errorServidor.mensaje = mensaje
   estado.value = 'error'
+}
+
+/**
+ * Retoque final del texto de la IA: a veces el modelo añade un recuento de
+ * palabras («…hasta tarde. (248 palabras)») porque el prompt pide un máximo.
+ * Se quita ESE trozo final; el resto del plan se pinta tal cual llega.
+ */
+function limpiarTexto(texto) {
+  return texto.replace(/\s*\(\s*\d+\s+palabras\s*\)\s*\.?$/i, '').trim()
 }
 
 /** Traduce el `detail` estándar de FastAPI/Pydantic a mensajes junto a cada campo. */
@@ -426,15 +537,56 @@ function cambiarPersonas(paso) {
               </p>
             </div>
 
+            <!-- Compañía (no es un campo del contrato: viaja dentro de gustos) -->
+            <fieldset class="sm:col-span-2">
+              <legend class="mb-1.5 block text-sm font-semibold">¿Con quién vais?</legend>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="opcion in OPCIONES_COMPANIA"
+                  :key="opcion.valor"
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                  :class="
+                    !companiaDisponible(opcion.valor)
+                      ? 'cursor-not-allowed border-dashed border-line bg-page/40 text-muted/40'
+                      : compania === opcion.valor
+                        ? 'border-acento bg-acento/15 text-acento'
+                        : 'border-line bg-page text-muted hover:border-acento/60 hover:text-ink'
+                  "
+                  :aria-pressed="compania === opcion.valor"
+                  :disabled="!companiaDisponible(opcion.valor)"
+                  :title="companiaDisponible(opcion.valor) ? undefined : 'No disponible con este número de personas'"
+                  @click="elegirCompania(opcion.valor)"
+                >
+                  <!-- Icono «no disponible»: se nota sin leer nada -->
+                  <svg
+                    v-if="!companiaDisponible(opcion.valor)"
+                    viewBox="0 0 24 24"
+                    class="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.25"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                  {{ opcion.texto }}
+                </button>
+              </div>
+              <p class="mt-1.5 text-xs text-muted">{{ pistaCompania }}</p>
+            </fieldset>
+
             <!-- Gustos -->
             <div class="sm:col-span-2">
               <div class="mb-1.5 flex items-center justify-between gap-3">
                 <label for="gustos" class="block text-sm font-semibold">Gustos</label>
                 <span
                   class="text-xs"
-                  :class="formulario.gustos.length > LIMITES.gustos ? 'text-peligro' : 'text-muted'"
+                  :class="textoGustos.length > LIMITES.gustos ? 'text-peligro' : 'text-muted'"
                 >
-                  {{ formulario.gustos.length }}/{{ LIMITES.gustos }}
+                  {{ textoGustos.length }}/{{ LIMITES.gustos }}
+                  <template v-if="compania"> (con compañía)</template>
                 </span>
               </div>
               <textarea
@@ -527,6 +679,10 @@ function cambiarPersonas(paso) {
               <dd class="text-right font-semibold">{{ resumen.personas }}</dd>
             </div>
             <div class="flex items-start justify-between gap-3">
+              <dt class="text-muted">Compañía</dt>
+              <dd class="text-right font-semibold">{{ resumen.compania }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
               <dt class="text-muted">Gustos</dt>
               <dd class="text-right font-semibold">{{ resumen.gustos }}</dd>
             </div>
@@ -616,7 +772,57 @@ function cambiarPersonas(paso) {
           </div>
 
           <!-- El texto de la IA se pinta como TEXTO ({{ }}), nunca con v-html -->
-          <p class="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">{{ resultado }}</p>
+          <template v-if="plan.bloques.length">
+            <p v-if="plan.intro" class="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">
+              {{ plan.intro }}
+            </p>
+
+            <!-- Una tarjeta por franja: Mañana · Tarde · Noche -->
+            <div class="mt-4 space-y-3">
+              <section
+                v-for="bloque in plan.bloques"
+                :key="bloque.titulo"
+                class="rounded-xl border border-line bg-page p-4"
+              >
+                <h3
+                  class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-acento"
+                >
+                  <svg
+                    v-if="bloque.titulo === 'Noche'"
+                    viewBox="0 0 24 24"
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+                  </svg>
+                  <svg
+                    v-else
+                    viewBox="0 0 24 24"
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="4" />
+                    <path
+                      d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+                    />
+                  </svg>
+                  {{ bloque.titulo }}
+                </h3>
+                <p class="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed">
+                  {{ bloque.cuerpo }}
+                </p>
+              </section>
+            </div>
+          </template>
+
+          <!-- Si la IA no sigue el formato, se muestra tal cual (sin interpretar) -->
+          <p v-else class="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">{{ resultado }}</p>
 
           <p
             class="mt-5 rounded-xl border border-acento/40 bg-acento/10 p-3 text-xs text-muted"
