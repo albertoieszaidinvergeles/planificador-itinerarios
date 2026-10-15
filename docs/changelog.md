@@ -26,8 +26,8 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 
 | Hito | Manuel (min) | Alberto (min) | Total |
 |---|---|---|---|
-| H0 | 120 | | 120 |
+| H0 | 120 | 100 | 220 |
 | H1 | 240 | | 240 |
 | H2 | 60 | | 60 |
-| H4 | 200 | | 200 |
-| H6 | 260 | | 260 |
+| H4 | | 200 | 200 |
+| H6 | | 130 | 130 |
