@@ -1,2 +1,65 @@
 /* Tailwind CSS v4: solo hay que importarlo; sin tailwind.config.js ni postcss. */
 @import "tailwindcss";
+
+/*
+ * Tokens de color del tema.
+ * Se declaran como variables CSS normales y se exponen a Tailwind con
+ * `@theme inline`: así utilidades como `bg-page` o `text-muted` cambian
+ * de valor según la clase que lleve <html> (por defecto: tema oscuro).
+ * Ojo: el tema NO se guarda en ningún sitio (RES-03, cero persistencia).
+ */
+@theme inline {
+  --color-page: var(--page); /* fondo de la página */
+  --color-card: var(--card); /* fondo de las tarjetas */
+  --color-line: var(--line); /* bordes */
+  --color-ink: var(--ink); /* texto principal */
+  --color-muted: var(--muted); /* texto secundario */
+  --color-acento: var(--acento); /* ámbar del Figma */
+  --color-acento-oscuro: var(--acento-oscuro); /* texto sobre ámbar */
+  --color-peligro: var(--peligro); /* errores */
+  --color-peligro-suave: var(--peligro-suave); /* fondo de errores */
+  --color-ok: var(--ok); /* avisos e indicadores */
+}
+
+/* Tema OSCURO (por defecto): el del boceto del Figma. */
+:root {
+  color-scheme: dark;
+  --page: #0b0d10;
+  --card: #16181d;
+  --card-2: #1d2026;
+  --line: #272b33;
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --acento: #f5a524;
+  --acento-oscuro: #1b1204;
+  --peligro: #f87171;
+  --peligro-suave: #2b1416;
+  --ok: #4ade80;
+}
+
+/* Tema CLARO: mismo diseño, paleta clara. Se activa con la clase `claro`. */
+html.claro {
+  color-scheme: light;
+  --page: #f6f6f4;
+  --card: #ffffff;
+  --card-2: #f4f4f5;
+  --line: #e4e4e7;
+  --ink: #18181b;
+  --muted: #52525b;
+  --acento: #f59e0b;
+  --acento-oscuro: #1b1204;
+  --peligro: #dc2626;
+  --peligro-suave: #fef2f2;
+  --ok: #16a34a;
+}
+
+@layer base {
+  body {
+    background-color: var(--page);
+    color: var(--ink);
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}

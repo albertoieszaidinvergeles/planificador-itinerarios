@@ -1,10 +1,20 @@
 <script setup>
 /*
- * Versión funcional (H4 + estados): formulario con validación en cliente,
- * llamada a POST /api/plan y los cuatro estados de la pantalla única.
- * Estilo todavía básico: el diseño con Tailwind llega en el paso H6.
+ * LA ÚNICA PANTALLA de App 1 (R-01): formulario + resultado.
+ * Sin router, sin store y sin persistencia: el resultado vive en memoria
+ * hasta el siguiente envío o hasta que se recarga la página (R-03).
+ *
+ * Estados (solo uno visible a la vez):
+ *   entrada  → formulario listo
+ *   espera   → spinner y botón deshabilitado (impide envíos duplicados)
+ *   resultado→ texto del plan
+ *   error    → mensaje controlado del backend + reintento
  */
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+
+/* ------------------------------------------------------------------ *
+ * Configuración
+ * ------------------------------------------------------------------ */
 
 // URL del backend: VITE_API_BASE_URL (pública) o la de desarrollo local.
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
@@ -12,15 +22,26 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').
 // Límites del contrato (idénticos a los de Pydantic en el backend).
 const LIMITES = { ciudad: 80, gustos: 200, personasMin: 1, personasMax: 20 }
 
+/* ------------------------------------------------------------------ *
+ * Estado de la pantalla
+ * ------------------------------------------------------------------ */
+
 const estado = ref('entrada') // entrada | espera | resultado | error
 const formulario = reactive({ ciudad: '', fecha: '', personas: 2, gustos: '' })
 const erroresCampo = reactive({ ciudad: '', fecha: '', personas: '', gustos: '' })
-const avisoGeneral = ref('')
-const resultado = ref('')
+const avisoGeneral = ref('') // avisos en estado entrada (p. ej. validación 422)
+const resultado = ref('') // texto devuelto por el backend (texto plano, nunca HTML)
 const errorServidor = reactive({ codigo: '', mensaje: '' })
+const temaOscuro = ref(true) // el boceto del Figma es oscuro; se puede cambiar a claro
 
+// Mínimo del campo fecha: hoy (el backend rechaza fechas pasadas con 422).
 const fechaMin = hoyISO()
 
+/* ------------------------------------------------------------------ *
+ * Utilidades
+ * ------------------------------------------------------------------ */
+
+/** Fecha de hoy en local con formato AAAA-MM-DD (toISOString usaría UTC). */
 function hoyISO() {
   const hoy = new Date()
   const mes = String(hoy.getMonth() + 1).padStart(2, '0')
@@ -28,6 +49,29 @@ function hoyISO() {
   return `${hoy.getFullYear()}-${mes}-${dia}`
 }
 
+/** "2026-10-20" → "20 oct 2026" (mediodía local para no desplazar el día). */
+function fechaLegible(valor) {
+  if (!valor) return '—'
+  const fecha = new Date(`${valor}T12:00:00`)
+  if (Number.isNaN(fecha.getTime())) return valor
+  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).format(fecha)
+}
+
+// Resumen lateral: se recalcula solo mientras se escribe (nada se guarda).
+const resumen = computed(() => ({
+  destino: formulario.ciudad.trim() || '—',
+  fecha: fechaLegible(formulario.fecha),
+  personas: `${formulario.personas} ${formulario.personas === 1 ? 'persona' : 'personas'}`,
+  gustos: formulario.gustos.trim() || '—',
+}))
+
+/** Alterna entre tema oscuro (Figma) y claro. Solo en memoria. */
+function cambiarTema() {
+  temaOscuro.value = !temaOscuro.value
+  document.documentElement.classList.toggle('claro', !temaOscuro.value)
+}
+
+/** Marca un campo como inválido y lo asocia a su input con aria-invalid. */
 function marcarCampo(campo, mensaje) {
   erroresCampo[campo] = mensaje
 }
@@ -36,20 +80,25 @@ function limpiarErroresCampo() {
   for (const campo of Object.keys(erroresCampo)) erroresCampo[campo] = ''
 }
 
+/** Primer campo inválido visible: recibe el foco para que el usuario lo corrija. */
 function enfocarPrimerError() {
   const primerInvalido = document.querySelector('[aria-invalid="true"]')
   if (primerInvalido) primerInvalido.focus()
 }
 
-// La validación del cliente ayuda al usuario; NO sustituye a la del backend.
+/* ------------------------------------------------------------------ *
+ * Validación en cliente (ayuda al usuario; NO sustituye a la del backend)
+ * ------------------------------------------------------------------ */
+
 function validar() {
   limpiarErroresCampo()
   let correcto = true
 
-  if (!formulario.ciudad.trim()) {
+  const ciudad = formulario.ciudad.trim()
+  if (!ciudad) {
     marcarCampo('ciudad', 'Escribe la ciudad a la que vais.')
     correcto = false
-  } else if (formulario.ciudad.trim().length > LIMITES.ciudad) {
+  } else if (ciudad.length > LIMITES.ciudad) {
     marcarCampo('ciudad', `Máximo ${LIMITES.ciudad} caracteres.`)
     correcto = false
   }
@@ -68,10 +117,12 @@ function validar() {
     correcto = false
   }
 
-  if (!formulario.gustos.trim()) {
+  // Los gustos se envían JUNTO con la compañía: se valida el texto final.
+  const gustos = formulario.gustos.trim()
+  if (!gustos) {
     marcarCampo('gustos', 'Cuéntanos qué os apetece (p. ej. «museos y tapas»).')
     correcto = false
-  } else if (formulario.gustos.trim().length > LIMITES.gustos) {
+  } else if (gustos.length > LIMITES.gustos) {
     marcarCampo('gustos', `Máximo ${LIMITES.gustos} caracteres.`)
     correcto = false
   }
@@ -79,15 +130,19 @@ function validar() {
   return correcto
 }
 
+/* ------------------------------------------------------------------ *
+ * Envío al backend: POST /api/plan
+ * ------------------------------------------------------------------ */
+
 async function enviar() {
-  // Sin envíos duplicados mientras hay una petición en curso.
+  // CA-RF01-02: mientras hay una petición en curso no se emite otra.
   if (estado.value === 'espera') return
 
   avisoGeneral.value = ''
   errorServidor.codigo = ''
   errorServidor.mensaje = ''
 
-  // Si algo no valida, no se hace NINGUNA llamada de red.
+  // Sin datos válidos no se hace NINGUNA llamada de red (CA-RF01-03).
   if (!validar()) {
     estado.value = 'entrada'
     avisoGeneral.value = 'Revisa los campos marcados: no se ha enviado nada.'
@@ -96,7 +151,7 @@ async function enviar() {
   }
 
   estado.value = 'espera'
-  resultado.value = '' // un nuevo envío reemplaza al anterior
+  resultado.value = '' // un nuevo envío reemplaza al anterior (CA-RF04-01)
 
   try {
     const respuesta = await fetch(`${BASE_URL}/api/plan`, {
@@ -113,6 +168,7 @@ async function enviar() {
     const datos = await respuesta.json().catch(() => null)
 
     if (respuesta.ok) {
+      // Solo se acepta el contrato {"resultado": "..."}.
       if (datos && typeof datos.resultado === 'string' && datos.resultado.trim()) {
         resultado.value = datos.resultado.trim()
         estado.value = 'resultado'
@@ -123,6 +179,7 @@ async function enviar() {
     }
 
     if (respuesta.status === 422) {
+      // Error de validación del backend: se marca campo a campo y sin llamar a la IA.
       manejar422(datos)
       return
     }
@@ -130,6 +187,7 @@ async function enviar() {
     // Errores controlados del contrato: 502 / 504 / 500…
     mostrarError(datos?.error?.codigo || 'ERROR_INTERNO', datos?.error?.mensaje || 'Error interno.')
   } catch {
+    // fetch falla: backend caído o sin conexión.
     mostrarError('SIN_CONEXION', 'No se ha podido contactar con el servidor. Inténtalo más tarde.')
   }
 }
@@ -140,7 +198,7 @@ function mostrarError(codigo, mensaje) {
   estado.value = 'error'
 }
 
-// Traduce el `detail` estándar de FastAPI/Pydantic a mensajes junto a cada campo.
+/** Traduce el `detail` estándar de FastAPI/Pydantic a mensajes junto a cada campo. */
 function manejar422(datos) {
   const mensajes = {
     ciudad: `La ciudad es obligatoria (máximo ${LIMITES.ciudad} caracteres).`,
@@ -152,11 +210,13 @@ function manejar422(datos) {
   limpiarErroresCampo()
   const detalle = Array.isArray(datos?.detail) ? datos.detail : []
   for (const item of detalle) {
-    const campo = Array.isArray(item?.loc) ? item.loc[1] : null // loc = ["body", "campo"]
+    // Cada elemento es {type, loc: ["body", "campo"], msg, ...}
+    const campo = Array.isArray(item?.loc) ? item.loc[1] : null
     if (campo && mensajes[campo] && !erroresCampo[campo]) marcarCampo(campo, mensajes[campo])
   }
 
-  avisoGeneral.value = Object.values(erroresCampo).some(Boolean)
+  const hayErrorDeCampo = Object.values(erroresCampo).some(Boolean)
+  avisoGeneral.value = hayErrorDeCampo
     ? 'El backend ha rechazado los datos (422): revisa los campos marcados. No se ha llamado a la IA.'
     : 'El backend ha devuelto 422: revisa los datos del formulario.'
 
@@ -164,20 +224,24 @@ function manejar422(datos) {
   enfocarPrimerError()
 }
 
+/** Reintento desde el estado error: conserva el formulario y vuelve a enviar. */
 function reintentar() {
   estado.value = 'entrada'
   enviar()
 }
 
+/** Vuelve al estado entrada sin perder los datos del formulario (CA-RF04-02). */
 function editarFormulario() {
   estado.value = 'entrada'
 }
 
+/** Botón del estado resultado: deja la pantalla lista para un plan nuevo. */
 function nuevoPlan() {
   resultado.value = ''
   estado.value = 'entrada'
 }
 
+/** Stepper de personas: nunca sale del rango del contrato. */
 function cambiarPersonas(paso) {
   const actual = Number(formulario.personas) || LIMITES.personasMin
   formulario.personas = Math.min(LIMITES.personasMax, Math.max(LIMITES.personasMin, actual + paso))
@@ -185,195 +249,416 @@ function cambiarPersonas(paso) {
 </script>
 
 <template>
-  <main class="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
-    <div class="mx-auto max-w-3xl">
-      <h1 class="text-3xl font-bold">Planificador de itinerarios</h1>
-      <p class="mt-2 text-zinc-400">Los cuatro campos son obligatorios.</p>
-
-      <form
-        class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
-        novalidate
-        @submit.prevent="enviar"
-      >
-        <div class="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label for="ciudad" class="block font-semibold">Ciudad</label>
-            <input
-              id="ciudad"
-              v-model="formulario.ciudad"
-              type="text"
-              name="ciudad"
-              :maxlength="LIMITES.ciudad"
-              placeholder="Sevilla"
-              class="mt-1.5 w-full rounded-lg border bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              :class="erroresCampo.ciudad ? 'border-red-500' : 'border-zinc-700'"
-              :aria-invalid="erroresCampo.ciudad ? 'true' : undefined"
-              @input="erroresCampo.ciudad = ''"
-            />
-            <p v-if="erroresCampo.ciudad" class="mt-1 text-sm text-red-400">
-              {{ erroresCampo.ciudad }}
-            </p>
-          </div>
-
-          <div>
-            <label for="fecha" class="block font-semibold">Fecha</label>
-            <input
-              id="fecha"
-              v-model="formulario.fecha"
-              type="date"
-              name="fecha"
-              :min="fechaMin"
-              class="mt-1.5 w-full rounded-lg border bg-zinc-950 px-3 py-2 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              :class="erroresCampo.fecha ? 'border-red-500' : 'border-zinc-700'"
-              :aria-invalid="erroresCampo.fecha ? 'true' : undefined"
-              @input="erroresCampo.fecha = ''"
-            />
-            <p v-if="erroresCampo.fecha" class="mt-1 text-sm text-red-400">
-              {{ erroresCampo.fecha }}
-            </p>
-          </div>
-
-          <div>
-            <label for="personas" class="block font-semibold">Personas</label>
-            <div
-              class="mt-1.5 flex items-center justify-between rounded-lg border px-2 py-1"
-              :class="erroresCampo.personas ? 'border-red-500' : 'border-zinc-700'"
-            >
-              <button
-                type="button"
-                class="h-8 w-8 rounded-md bg-zinc-800 text-lg"
-                aria-label="Quitar una persona"
-                @click="cambiarPersonas(-1)"
-              >
-                −
-              </button>
-              <input
-                id="personas"
-                v-model.number="formulario.personas"
-                type="number"
-                name="personas"
-                :min="LIMITES.personasMin"
-                :max="LIMITES.personasMax"
-                class="w-14 bg-transparent text-center focus:outline-none focus:ring-2 focus:ring-amber-500"
-                :aria-invalid="erroresCampo.personas ? 'true' : undefined"
-                @input="erroresCampo.personas = ''"
-              />
-              <button
-                type="button"
-                class="h-8 w-8 rounded-md bg-zinc-800 text-lg"
-                aria-label="Añadir una persona"
-                @click="cambiarPersonas(1)"
-              >
-                +
-              </button>
-            </div>
-            <p v-if="erroresCampo.personas" class="mt-1 text-sm text-red-400">
-              {{ erroresCampo.personas }}
-            </p>
-          </div>
-
-          <div class="flex items-end">
-            <p class="w-full rounded-lg border border-dashed border-zinc-700 px-3 py-2.5 text-sm text-zinc-400">
-              Sin registro · sin cookies · sin base de datos
-            </p>
-          </div>
-
-          <div class="sm:col-span-2">
-            <div class="mb-1.5 flex items-center justify-between gap-3">
-              <label for="gustos" class="block font-semibold">Gustos</label>
-              <span class="text-sm text-zinc-500">{{ formulario.gustos.length }}/{{ LIMITES.gustos }}</span>
-            </div>
-            <textarea
-              id="gustos"
-              v-model="formulario.gustos"
-              name="gustos"
-              rows="3"
-              :maxlength="LIMITES.gustos"
-              placeholder="Museos, gastronomía y paseos…"
-              class="w-full rounded-lg border bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              :class="erroresCampo.gustos ? 'border-red-500' : 'border-zinc-700'"
-              :aria-invalid="erroresCampo.gustos ? 'true' : undefined"
-              @input="erroresCampo.gustos = ''"
-            ></textarea>
-            <p v-if="erroresCampo.gustos" class="mt-1 text-sm text-red-400">
-              {{ erroresCampo.gustos }}
-            </p>
+  <div class="flex min-h-screen flex-col">
+    <!-- ── Cabecera ─────────────────────────────────────────────── -->
+    <header class="border-b border-line">
+      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <span
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-acento text-acento-oscuro"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v13" />
+              <path d="M13 19h5a2 2 0 0 0 2-2v-5" />
+              <circle cx="6.5" cy="17.5" r="1.5" />
+              <circle cx="17.5" cy="10.5" r="1.5" />
+            </svg>
+          </span>
+          <div class="leading-tight">
+            <p class="text-sm font-extrabold">Planificador de itinerarios</p>
+            <p class="text-xs text-muted">Tu día, organizado en segundos</p>
           </div>
         </div>
 
         <button
-          type="submit"
-          class="mt-6 w-full rounded-lg bg-amber-500 px-5 py-3 font-bold text-zinc-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          :disabled="estado === 'espera'"
-          :aria-busy="estado === 'espera'"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-2 text-sm text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+          :aria-pressed="temaOscuro"
+          @click="cambiarTema"
         >
-          {{ estado === 'espera' ? 'Generando…' : 'Generar plan' }}
+          <svg
+            v-if="temaOscuro"
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
+          </svg>
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+          </svg>
+          {{ temaOscuro ? 'Modo oscuro' : 'Modo claro' }}
         </button>
-        <p class="mt-3 text-sm text-zinc-500">Tardará unos segundos · gratis · sin registro</p>
-      </form>
+      </div>
+    </header>
 
-      <!-- Zona de estados: solo uno visible -->
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+      <!-- ── Presentación ───────────────────────────────────────── -->
+      <section>
+        <p
+          class="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1 text-xs text-muted"
+        >
+          <span class="h-2 w-2 rounded-full bg-ok" aria-hidden="true"></span>
+          Sin registro · Gratis · Un plan en segundos
+        </p>
+        <h1 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">
+          Tu plan de un día, <span class="text-acento">de la mañana a la noche</span>
+        </h1>
+        <p class="mt-3 max-w-2xl text-muted">
+          Dinos a dónde vais, cuándo, cuántos sois y qué os apetece. La IA propone la
+          mañana, la tarde y la noche; el resultado se muestra aquí mismo, sin registro y
+          sin guardarlo en ningún sitio.
+        </p>
+      </section>
+
+      <!-- ── Formulario + resumen ───────────────────────────────── -->
+      <div class="mt-8 grid gap-6 lg:grid-cols-3">
+        <form
+          class="rounded-2xl border border-line bg-card p-5 sm:p-6 lg:col-span-2"
+          novalidate
+          @submit.prevent="enviar"
+        >
+          <h2 class="text-lg font-bold">Configura tu plan</h2>
+          <p class="mt-1 text-sm text-muted">Los cuatro campos son obligatorios.</p>
+
+          <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <!-- Ciudad -->
+            <div>
+              <label for="ciudad" class="mb-1.5 block text-sm font-semibold">Ciudad</label>
+              <input
+                id="ciudad"
+                v-model="formulario.ciudad"
+                type="text"
+                name="ciudad"
+                autocomplete="off"
+                :maxlength="LIMITES.ciudad"
+                placeholder="Sevilla"
+                class="w-full rounded-xl border bg-page px-3 py-2.5 text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                :class="erroresCampo.ciudad ? 'border-peligro' : 'border-line'"
+                :aria-invalid="erroresCampo.ciudad ? 'true' : undefined"
+                aria-describedby="error-ciudad"
+                @input="erroresCampo.ciudad = ''"
+              />
+              <p v-if="erroresCampo.ciudad" id="error-ciudad" class="mt-1.5 text-xs text-peligro">
+                {{ erroresCampo.ciudad }}
+              </p>
+            </div>
+
+            <!-- Fecha -->
+            <div>
+              <label for="fecha" class="mb-1.5 block text-sm font-semibold">Fecha</label>
+              <input
+                id="fecha"
+                v-model="formulario.fecha"
+                type="date"
+                name="fecha"
+                :min="fechaMin"
+                class="w-full rounded-xl border bg-page px-3 py-2.5 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                :class="erroresCampo.fecha ? 'border-peligro' : 'border-line'"
+                :aria-invalid="erroresCampo.fecha ? 'true' : undefined"
+                aria-describedby="error-fecha"
+                @input="erroresCampo.fecha = ''"
+              />
+              <p v-if="erroresCampo.fecha" id="error-fecha" class="mt-1.5 text-xs text-peligro">
+                {{ erroresCampo.fecha }}
+              </p>
+            </div>
+
+            <!-- Personas -->
+            <div>
+              <label for="personas" class="mb-1.5 block text-sm font-semibold">Personas</label>
+              <div
+                class="flex items-center justify-between rounded-xl border px-2 py-1.5"
+                :class="erroresCampo.personas ? 'border-peligro' : 'border-line'"
+              >
+                <button
+                  type="button"
+                  class="h-8 w-8 rounded-lg bg-page text-lg leading-none text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                  aria-label="Quitar una persona"
+                  @click="cambiarPersonas(-1)"
+                >
+                  −
+                </button>
+                <input
+                  id="personas"
+                  v-model.number="formulario.personas"
+                  type="number"
+                  name="personas"
+                  inputmode="numeric"
+                  :min="LIMITES.personasMin"
+                  :max="LIMITES.personasMax"
+                  class="w-14 bg-transparent text-center text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                  :aria-invalid="erroresCampo.personas ? 'true' : undefined"
+                  aria-describedby="error-personas"
+                  @input="erroresCampo.personas = ''"
+                />
+                <button
+                  type="button"
+                  class="h-8 w-8 rounded-lg bg-page text-lg leading-none text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                  aria-label="Añadir una persona"
+                  @click="cambiarPersonas(1)"
+                >
+                  +
+                </button>
+              </div>
+              <p v-if="erroresCampo.personas" id="error-personas" class="mt-1.5 text-xs text-peligro">
+                {{ erroresCampo.personas }}
+              </p>
+            </div>
+
+            <!-- Contador (ayuda visual, no guarda nada) -->
+            <div class="flex items-end">
+              <p class="w-full rounded-xl border border-dashed border-line px-3 py-2.5 text-sm text-muted">
+                Sin registro · sin cookies · sin base de datos
+              </p>
+            </div>
+
+            <!-- Gustos -->
+            <div class="sm:col-span-2">
+              <div class="mb-1.5 flex items-center justify-between gap-3">
+                <label for="gustos" class="block text-sm font-semibold">Gustos</label>
+                <span
+                  class="text-xs"
+                  :class="formulario.gustos.length > LIMITES.gustos ? 'text-peligro' : 'text-muted'"
+                >
+                  {{ formulario.gustos.length }}/{{ LIMITES.gustos }}
+                </span>
+              </div>
+              <textarea
+                id="gustos"
+                v-model="formulario.gustos"
+                name="gustos"
+                rows="3"
+                :maxlength="LIMITES.gustos"
+                placeholder="Museos, gastronomía y paseos…"
+                class="w-full resize-y rounded-xl border bg-page px-3 py-2.5 text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
+                :class="erroresCampo.gustos ? 'border-peligro' : 'border-line'"
+                :aria-invalid="erroresCampo.gustos ? 'true' : undefined"
+                aria-describedby="error-gustos"
+                @input="erroresCampo.gustos = ''"
+              ></textarea>
+              <p v-if="erroresCampo.gustos" id="error-gustos" class="mt-1.5 text-xs text-peligro">
+                {{ erroresCampo.gustos }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Envío -->
+          <button
+            type="submit"
+            class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-acento px-5 py-3 font-bold text-acento-oscuro transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            :disabled="estado === 'espera'"
+            :aria-busy="estado === 'espera'"
+          >
+            <svg
+              v-if="estado === 'espera'"
+              viewBox="0 0 24 24"
+              class="h-4 w-4 animate-spin"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-6.2-8.6" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="m12 3 1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z" />
+            </svg>
+            {{ estado === 'espera' ? 'Generando…' : 'Generar plan' }}
+          </button>
+          <p class="mt-3 text-xs text-muted">
+            Tardará unos segundos · gratis · sin registro
+          </p>
+        </form>
+
+        <!-- Resumen en vivo (solo lectura, nada se almacena) -->
+        <aside class="h-fit rounded-2xl border border-line bg-card p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="flex items-center gap-2 text-lg font-bold">
+              <span
+                class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-card-2 text-acento"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 6h16M4 12h10M4 18h7" />
+                </svg>
+              </span>
+              Tu plan
+            </h2>
+            <span
+              class="h-2.5 w-2.5 rounded-full"
+              :class="estado === 'espera' ? 'bg-acento' : 'bg-ok'"
+              aria-hidden="true"
+            ></span>
+          </div>
+
+          <dl class="mt-4 space-y-3 text-sm">
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-muted">Destino</dt>
+              <dd class="text-right font-semibold">{{ resumen.destino }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-muted">Fecha</dt>
+              <dd class="text-right font-semibold">{{ resumen.fecha }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-muted">Personas</dt>
+              <dd class="text-right font-semibold">{{ resumen.personas }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-muted">Gustos</dt>
+              <dd class="text-right font-semibold">{{ resumen.gustos }}</dd>
+            </div>
+          </dl>
+
+          <hr class="my-4 border-line" />
+          <p class="text-xs text-muted">
+            Nada de esto se guarda: ni base de datos, ni historial, ni almacenamiento en el
+            navegador. Al recargar la página todo desaparece.
+          </p>
+        </aside>
+      </div>
+
+      <!-- ── Zona de estados (solo uno visible) ─────────────────── -->
       <section class="mt-6" aria-live="polite">
-        <div v-if="estado === 'entrada'">
+        <!-- entrada -->
+        <template v-if="estado === 'entrada'">
           <div
             v-if="avisoGeneral"
             role="alert"
-            class="rounded-xl border border-red-500 bg-red-950/40 p-4 text-sm text-red-300"
+            class="rounded-2xl border border-peligro bg-peligro-suave p-5 text-sm text-peligro"
           >
             {{ avisoGeneral }}
           </div>
-          <div v-else class="rounded-xl border border-dashed border-zinc-700 p-8 text-center text-zinc-400">
-            <p class="font-semibold text-zinc-200">Aquí aparecerá tu plan</p>
+          <div
+            v-else
+            class="rounded-2xl border border-dashed border-line p-8 text-center text-muted"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="mx-auto h-8 w-8 text-acento"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              aria-hidden="true"
+            >
+              <path d="M4 19V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v13" />
+              <path d="M13 19h5a2 2 0 0 0 2-2v-5" />
+              <circle cx="6.5" cy="17.5" r="1.5" />
+              <circle cx="17.5" cy="10.5" r="1.5" />
+            </svg>
+            <p class="mt-3 font-semibold">Aquí aparecerá tu plan</p>
             <p class="mt-1 text-sm">Rellena el formulario y pulsa «Generar plan».</p>
           </div>
-        </div>
+        </template>
 
+        <!-- espera -->
         <div
           v-else-if="estado === 'espera'"
-          class="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center"
+          class="rounded-2xl border border-line bg-card p-8 text-center"
         >
-          <p class="font-semibold text-zinc-200">Generando tu plan…</p>
-          <p class="mt-1 text-sm text-zinc-400">La IA tarda unos segundos. No cierres la página.</p>
+          <svg
+            viewBox="0 0 24 24"
+            class="mx-auto h-8 w-8 animate-spin text-acento"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            aria-hidden="true"
+          >
+            <path d="M21 12a9 9 0 1 1-6.2-8.6" />
+          </svg>
+          <p class="mt-3 font-semibold">Generando tu plan…</p>
+          <p class="mt-1 text-sm text-muted">
+            La IA tarda unos segundos. No cierres la página.
+          </p>
         </div>
 
-        <article v-else-if="estado === 'resultado'" class="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-xl font-bold">Tu plan</h2>
+        <!-- resultado -->
+        <article
+          v-else-if="estado === 'resultado'"
+          class="rounded-2xl border border-line bg-card p-5 sm:p-6"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-muted">Plan de un día</p>
+              <h2 class="text-xl font-bold">
+                {{ resumen.destino }} · {{ resumen.fecha }}
+              </h2>
+            </div>
             <button
               type="button"
-              class="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              class="rounded-xl border border-line px-4 py-2 text-sm font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
               @click="nuevoPlan"
             >
               Nuevo plan
             </button>
           </div>
 
-          <!-- Texto de la IA pintado como TEXTO ({{ }}), nunca con v-html -->
-          <p class="mt-4 whitespace-pre-wrap leading-relaxed">{{ resultado }}</p>
+          <!-- El texto de la IA se pinta como TEXTO ({{ }}), nunca con v-html -->
+          <p class="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">{{ resultado }}</p>
 
-          <p class="mt-5 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-zinc-400">
-            <strong class="text-amber-400">Aviso:</strong> texto generado por IA, orientativo y no
+          <p
+            class="mt-5 rounded-xl border border-acento/40 bg-acento/10 p-3 text-xs text-muted"
+          >
+            <strong class="text-acento">Aviso:</strong> texto generado por IA, orientativo y no
             verificado. Comprueba lugares, horarios y precios antes de salir.
           </p>
         </article>
 
-        <div v-else role="alert" class="rounded-xl border border-red-500/50 bg-red-950/40 p-6 text-center">
-          <h2 class="text-xl font-bold text-red-200">No hemos podido generar el plan</h2>
-          <p class="mt-2 text-sm text-zinc-300">{{ errorServidor.mensaje }}</p>
-          <p class="mt-3 inline-block rounded-full border border-red-500/50 px-3 py-1 font-mono text-sm text-red-300">
+        <!-- error -->
+        <div
+          v-else
+          role="alert"
+          class="rounded-2xl border border-peligro/50 bg-peligro-suave p-6 text-center"
+        >
+          <span
+            class="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-full bg-peligro/15 text-peligro"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+          </span>
+          <h2 class="mt-3 text-xl font-bold">No hemos podido generar el plan</h2>
+          <p class="mt-2 text-sm text-muted">{{ errorServidor.mensaje }}</p>
+          <p
+            class="mt-3 inline-block rounded-full border border-peligro/40 px-3 py-1 font-mono text-xs text-peligro"
+          >
             {{ errorServidor.codigo }}
           </p>
+
           <div class="mt-5 flex flex-wrap justify-center gap-3">
             <button
               type="button"
-              class="rounded-lg bg-amber-500 px-5 py-2.5 font-bold text-zinc-950 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              class="rounded-xl bg-acento px-5 py-2.5 font-bold text-acento-oscuro transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento focus-visible:ring-offset-2 focus-visible:ring-offset-card"
               @click="reintentar"
             >
               Reintentar
             </button>
             <button
               type="button"
-              class="rounded-lg border border-zinc-700 px-5 py-2.5 text-zinc-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              class="rounded-xl border border-line px-5 py-2.5 font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acento"
               @click="editarFormulario"
             >
               Editar el formulario
@@ -381,6 +666,16 @@ function cambiarPersonas(paso) {
           </div>
         </div>
       </section>
-    </div>
-  </main>
+    </main>
+
+    <!-- ── Pie ──────────────────────────────────────────────────── -->
+    <footer class="border-t border-line">
+      <div
+        class="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6"
+      >
+        <p><strong class="text-ink">Planificador de itinerarios</strong> · © 2026</p>
+        <p>Contenido generado por IA · Oriéntalo siempre antes de salir</p>
+      </div>
+    </footer>
+  </div>
 </template>
