@@ -9,7 +9,7 @@
 | # | Arreglar | Dónde | Quién | Estado |
 |---|---|---|---|---|
 | 1 | Límite de tamaño del cuerpo (`413`) | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
-| 2 | Rate limit en el borde (`429`) + alerta de gasto | Cloudflare / Wercel WAF + panel OpenRouter | Equipo | ⏳ Pendiente |
+| 2 | Rate limit en el borde (`429`) + alerta de gasto | SE ARREGLA EN BERCEL | Equipo | ⏳ Pendiente |
 | 3 | Desactivar `/docs`, `/redoc`, `/openapi.json` en producción | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
 | 4 | Cabeceras de seguridad del backend + ocultar `server: uvicorn` | `app1/backend/main.py` + arranque de uvicorn | Manuel | ⏳ Pendiente |
 | 5 | Cabeceras de seguridad del frontend | `app1/frontend/vercel.json` | Frontend | ✅ **Hecho** (commit `a7fafea`) |
@@ -76,36 +76,8 @@ así que la limitación va **delante** del backend (proxy/CDN) o en la factura d
 
 **Cómo se arregla (elegir una vía, o las dos):**
 
-**Opción A — Cloudflare (gratuita):**
-
-1. Dominio del backend en Cloudflare con el DNS en modo *proxied* (nube naranja).
-2. **Security → WAF → Rate limiting rules → Create rule.**
-3. Condición: `(http.request.uri.path eq "/api/plan" and http.request.method eq "POST")`.
-4. Rate: **10 peticiones / 60 segundos** por IP; acción: **Block** (Cloudflare responde `429`).
-5. Periodo de bloqueo: 60 s.
-
-**Opción B — WAF de Vercel** sobre el proyecto `app1-backend`:
-**Settings → Firewall → Rate limiting rules** (misma condición y misma tasa; disponibilidad
-según el plan de la cuenta).
-
-**Obligatorio en ambos casos — alerta en OpenRouter:**
-panel de la cuenta → **Usage / Limits → notificación de umbral** (por ejemplo, aviso al 80 %
-del límite diario). Es lo único que avisa si alguien empieza a gastar fuera de horario.
-
-**Cómo se verifica:**
-
-```bash
-for i in $(seq 1 100); do
-  curl -s -o /dev/null -w "%{http_code}\n" -X POST \
-    -H "Content-Type: application/json" \
-    -d '{"ciudad":"Sevilla","fecha":"2027-01-01","personas":2,"gustos":"tapas"}' \
-    https://<backend>/api/plan
-done | sort | uniq -c
-```
-
-Esperado: aparecen `429` (y se dispara la alerta de OpenRouter).
-
----
+ 
+NO ARREGLAR SE HACE EN VERCEL
 
 ## 3. Cerrar `/docs`, `/redoc` y `/openapi.json` en producción
 
