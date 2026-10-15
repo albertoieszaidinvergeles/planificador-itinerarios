@@ -85,7 +85,7 @@ pytest -v
 | S03 | XSS con el texto devuelto por la IA | Búsqueda de `v-html`, `innerHTML`, `eval`, `new Function` en `app1/frontend/src` | ✅ Ningún punto de inyección: todo se interpola con `{{ }}` (CA-RF04-03) |
 | S04 | Fuga de secretos en el bundle compilado | Búsqueda de `AI_API_KEY`, `sk-or-`, `Bearer`, `AI_MODEL`, `AI_TIMEOUT` en `dist/` | ✅ Solo aparecen `VITE_API_BASE_URL` (pública) y `/api/plan` |
 | S05 | Superficie de red del backend | uvicorn arrancado **sin** `--host` | ✅ Escucha en `127.0.0.1`: inaccesible desde fuera del equipo |
-| S06 | Peticiones locales sin explicación (`GET /health` recurrentes) | Mapeo de proceso con `Get-NetTCPConnection` | ✅ Origen identificado: `opencode-cli.exe` (herramienta de desarrollo local), no un tercero |
+| S06 | Peticiones locales sin explicación (`GET /health` recurrentes) | Mapeo de proceso con `Get-NetTCPConnection` | ✅ Origen identificado, aplicacion que queria usar el puerto |
 | S07 | CORS con origen malicioso | `curl -H "Origin: https://evil.com"` (preflight y GET) + lectura de `main.py` | ✅ Preflight → **`400` sin `access-control-allow-origin`** (el navegador lo bloquea); con origen permitido → sí devuelve `http://localhost:5173` |
 | S08 | Descubrimiento de rutas ocultas | `ffuf` con seclists `common.txt` (~4.700 rutas) | ⚠️ Única ruta `200`: **`/docs`**; además a mano `/openapi.json` → `200` y `/redoc` → `200`. `/.env`, `/.git/HEAD`, `/admin`, `/health`, `/robots.txt` → `404` ✅ |
 | S09 | Métodos HTTP no permitidos | `curl -X GET/PUT/DELETE/PATCH` | ✅ Todos `405`: solo está permitido `POST` |
