@@ -9,12 +9,9 @@
 | # | Arreglar | Dónde | Quién | Estado |
 |---|---|---|---|---|
 | 1 | Límite de tamaño del cuerpo (`413`) | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
-| 2 | Rate limit en el borde (`429`) + alerta de gasto | SE ARREGLA EN BERCEL | Equipo | ⏳ Pendiente |
+| 2 | Rate limit en el borde (`429`) + alerta de gasto | SE ARREGLA EN VERCEL | Equipo | ⏳ Pendiente |
 | 3 | Desactivar `/docs`, `/redoc`, `/openapi.json` en producción | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
 | 4 | Cabeceras de seguridad del backend + ocultar `server: uvicorn` | `app1/backend/main.py` + arranque de uvicorn | Manuel | ⏳ Pendiente |
-| 5 | Cabeceras de seguridad del frontend | `app1/frontend/vercel.json` | Frontend | ✅ **Hecho** (commit `a7fafea`) |
-| 6 | Prompt injection y ausencia de rate limit *dentro* de la app | — | — | ✅ Aceptados y documentados |
-
 ---
 
 ## 1. Límite de tamaño del cuerpo → `413`
@@ -175,38 +172,6 @@ Esperado: aparecen todas las cabeceras nuevas **y sigue apareciendo**
 
 ---
 
-## 5. Cabeceras del frontend — ✅ ya hecho
-
-**Archivo:** `app1/frontend/vercel.json` (commit `a7fafea`, documentado en `pruebas.md` S20).
-Vercel lo aplica a todas las rutas del proyecto `app1-frontend` en cuanto se despliegue (H7).
-
-| Cabecera | Para qué sirve |
-|---|---|
-| `Content-Security-Policy` | Bloquea scripts y recursos de otros orígenes; `script-src 'self'` impide ejecutar JS inyectado (nuestro XSS, S03) |
-| `X-Content-Type-Options: nosniff` | El navegador no «adivina» tipos: un JSON no se ejecuta como JS |
-| `X-Frame-Options: DENY` + `frame-ancestors 'none'` | Impide que la página se incruste en un iframe ajeno (clickjacking) |
-| `Referrer-Policy: strict-origin-when-cross-origin` | No se filtra la URL de destino en los referer cruzados |
-| `Permissions-Policy` | Apaga cámara, micrófono, geolocalización, pago y USB en esta página |
-| `Strict-Transport-Security` | Fuerza HTTPS durante 2 años en ese dominio |
-| `Cross-Origin-Opener-Policy` / `Cross-Origin-Resource-Policy` | Aíslan la pestaña y los recursos frente a otros orígenes |
-| `X-XSS-Protection: 0` | Desactiva el XSS auditor obsoleto del navegador (mejor CSP) |
-
-**Pendiente solo de comprobar:** la **S19**, contra la URL publicada:
-
-```bash
-curl -I https://<frontend-vercel>/
-```
-
----
-
-## 6. Riesgos aceptados (ya documentados, no se arreglan)
-
-| Riesgo | Por qué se acepta |
-|---|---|
-| **Prompt injection** en `gustos` (S18, funciona: el modelo respondió `PIRATA`) | Inherente a usar IA. El impacto se queda en el texto mostrado: sin BD, sin sesión, sin `v-html` (S03) y con `gustos` limitado a 200 caracteres, que impide prompts largos. Mitigación futura: tratar `gustos` como dato citado en el prompt (cambio en `ia.py`, hoy fuera de alcance) |
-| **Sin rate limit dentro de la app** (S12) | El enunciado prohíbe cachés y contadores en memoria; la limitación vive en el borde (punto 2) |
-
----
 
 ## Checklist final de verificación
 
