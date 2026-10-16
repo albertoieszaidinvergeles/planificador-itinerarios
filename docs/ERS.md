@@ -14,8 +14,8 @@
 | Curso y grupo | Aprendizaje automático: gestión de datos y entrenamiento — grupo de 2 integrantes |
 | Asignatura o módulo | Desarrollo de componentes software para sistemas de aprendizaje automático (UD1) |
 | Docente | Pendiente |
-| Fecha | 08/10/2026 |
-| Versión | 2.0 |
+| Fecha | 16/10/2026 |
+| Versión | 2.1 |
 | Estado | Borrador |
 
 > Este documento se entrega como `docs/ERS.md`, ubicación que exige el enunciado.
@@ -27,6 +27,7 @@
 | 0.1 | 08/10/2026 | Equipo | Primera versión del documento. |
 | 1.0 | 08/10/2026 | Equipo | Requisitos indicados por el docente: pantalla única, sin persistencia, Python + Vite, una sola API de IA, OpenRouter gratuito y despliegue en Vercel. |
 | 2.0 | 08/10/2026 | Equipo | Adaptación completa al enunciado PR01-UD1: dos aplicaciones (App 1 manual / App 2 con Spec Kit y Clerk), alcance reducido a una sola función útil, catálogo ajustado a 5 RF y 4 RNF, exclusiones obligatorias, despliegues Vercel y Docker/EC2 y eliminación de ejemplos de la plantilla. |
+| 2.1 | 16/10/2026 | Manuel | Puesta al día con lo implementado en App 1 (H1–H6): error `500 ERROR_INTERNO` en RF-03, OBJ-02, INT-02 y diagramas; formato fijo `Mañana:`/`Tarde:`/`Noche:` del prompt (RF-03, CA-RF03-05) y tarjetas del resultado (RF-04); compañía opcional dentro de `gustos` (1.3, RF-01, IU-01); Figma como referencia visual y movido a `docs/evidencias/figma/`; SUP-01 resuelta; ACT-02 con 2 integrantes; RNF-02 con `/docs` cerrado y cabeceras de seguridad; PEN-08 (`413`); trazabilidad enlazada con los IDs de `docs/pruebas.md`; revisión cruzada pendiente (10.2); orden y formato de los CA. |
 
 ## 1. Introducción
 
@@ -49,7 +50,7 @@ desarrollo probado y documentado (análisis, pruebas, Git, despliegue y defensa)
 | ID | Objetivo del proyecto | Indicador de logro |
 |---|---|---|
 | OBJ-01 | Ofrecer la única función útil: entrada → plan de un día en la misma pantalla | Con una entrada válida, la pantalla muestra el resultado sin navegar a otra vista (CA-RF04-01) |
-| OBJ-02 | Garantizar un contrato HTTP claro y manejar los errores sin exponer detalles internos | 200/422/502/504 (y 401 en App 2) documentados y comprobados con pruebas (CA-RF03-02, RNF-01) |
+| OBJ-02 | Garantizar un contrato HTTP claro y manejar los errores sin exponer detalles internos | 200/422/502/504/500 (y 401 en App 2) documentados y comprobados con pruebas (CA-RF03-02, RNF-01) |
 | OBJ-03 | Cumplir la regla de simplicidad: una pantalla, una API de IA, cero persistencia | Inspección de código: sin router, sin BD, sin `localStorage`/`sessionStorage`/IndexedDB (RNF-02) |
 | OBJ-04 | Demostrar dos procesos de desarrollo distinguibles (manual vs. dirigido por especificaciones) | Historial con hitos H0–H7 (App 1) y artefactos de Spec Kit previos al código (App 2) |
 | OBJ-05 | Desplegar y autenticar según el enunciado | App 1 en Vercel; App 2 en Vercel (Clerk) y en AWS EC2 con Docker (RNF-03 solo en lo que afecta a esta ERS: ver Anexo C) |
@@ -58,7 +59,7 @@ desarrollo probado y documentado (análisis, pruebas, Git, despliegue y defensa)
 
 **El sistema incluirá:**
 
-- **[Ambas]** Una única pantalla (SPA) con un formulario de entrada (ciudad, fecha, personas, gustos) y la zona de resultado.
+- **[Ambas]** Una única pantalla (SPA) con un formulario de entrada (ciudad, fecha, personas, gustos y, opcionalmente, con quién se viaja, que se envía dentro de `gustos`) y la zona de resultado.
 - **[Ambas]** Backend Python/FastAPI que valida la entrada, realiza **una** llamada a la API de IA y devuelve JSON.
 - **[Ambas]** Un resultado de texto (plan de un día) mostrado en la misma pantalla, con estados de espera y error.
 - **[App 1]** Desarrollo incremental del equipo y despliegue de frontend y backend en Vercel.
@@ -98,7 +99,7 @@ desarrollo probado y documentado (análisis, pruebas, Git, despliegue y defensa)
 |---|---|---|---|
 | FUE-01 | Enunciado de la práctica PR01-UD1 «Mini aplicación web con una API de IA» | 06/10/2026 | Documento facilitado por el docente |
 | FUE-02 | Plantilla `plantillaERS.md` del docente | — | Documento facilitado por el docente |
-| FUE-03 | Documento técnico del proyecto | v3 (08/10/2026) | `planificador-itinerarios-documento-tecnico.md` |
+| FUE-03 | Documento técnico del proyecto | v3 (08/10/2026) | `docs/planificador-itinerarios-documento-tecnico.md` |
 | FUE-04 | OpenRouter — modelos gratuitos | Consulta 06/10/2026 | <https://openrouter.ai/models?max_price=0> |
 | FUE-05 | Vercel — FastAPI, CLI y variables de entorno | Consulta 06/10/2026 | <https://vercel.com/docs/frameworks/backend/fastapi> |
 | FUE-06 | Clerk — tokens de sesión y verificación de JWT | Consulta 06/10/2026 | <https://clerk.com/docs/guides/sessions/session-tokens> |
@@ -124,7 +125,7 @@ flowchart LR
     B -->|Valida entrada y token [App 2]| B
     B -->|Una petición con clave privada| IA[OpenRouter: modelo gratuito]
     IA -->|Respuesta del proveedor| B
-    B -->|200 resultado · 422 · 502/504 · 401 [App 2]| F
+    B -->|200 resultado · 422 · 502/504 · 500 · 401 [App 2]| F
     F -->|Muestra el resultado en la misma pantalla| U
 ```
 
@@ -151,10 +152,13 @@ sequenceDiagram
     else Fallo o timeout de la IA
         B-->>F: 502 / 504 + error controlado
         F-->>U: Mensaje de error y reintento
+    else Error interno no previsto
+        B-->>F: 500 + ERROR_INTERNO (mensaje genérico)
+        F-->>U: Mensaje de error y reintento
     end
 ```
 
-*El diagrama de secuencia aclara el orden de validación y los tres desenlaces del contrato
+*El diagrama de secuencia aclara el orden de validación y los desenlaces del contrato
 (App 2 añade el rechazo 401 antes de consultar la IA; ver Anexo C).*
 
 ### 2.2. Personas interesadas y tipos de usuario
@@ -162,7 +166,7 @@ sequenceDiagram
 | ID | Persona, colectivo o rol | Necesidad o responsabilidad | Permisos y conocimientos relevantes |
 |---|---|---|---|
 | ACT-01 | Usuario final | Obtener un plan de un día rellenando el formulario | Usa el navegador; no necesita registro **[App 1]** ni conocimientos técnicos; **[App 2]** entra con Google |
-| ACT-02 | Equipo de desarrollo (2–3 integrantes) | Implementar, probar, desplegar y documentar ambas aplicaciones | Acceso al repositorio, a las cuentas de Vercel/OpenRouter **[App 2]** Clerk y **[App 2]** AWS; identidad Git propia |
+| ACT-02 | Equipo de desarrollo (2 integrantes) | Implementar, probar, desplegar y documentar ambas aplicaciones | Acceso al repositorio, a las cuentas de Vercel/OpenRouter **[App 2]** Clerk y **[App 2]** AWS; identidad Git propia |
 | ACT-03 | Docente | Evaluar el cumplimiento del enunciado y la rúbrica | Revisa documentos, repositorio, URLs desplegadas y defiende decisiones |
 
 > No se define ningún rol administrativo funcional: la app no tiene gestión de usuarios.
@@ -207,7 +211,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 
 | ID | Tipo | Descripción | Consecuencia si no se cumple |
 |---|---|---|---|
-| SUP-01 | Suposición | El docente acepta la idea «planificador de itinerarios» como necesidad real y pequeña (revisión de alcance pendiente) | Habría que reformular la propuesta antes de implementar |
+| SUP-01 | Suposición | El docente acepta la idea «planificador de itinerarios» como necesidad real y pequeña (confirmado el 14/10/2026, ver PEN-02) | Habría que reformular la propuesta antes de implementar |
 | SUP-02 | Suposición | Existe cuenta de Vercel y de OpenRouter con créditos suficientes para las demos | No se pueden generar planes ni desplegar |
 | SUP-03 | Suposición | **[App 2]** Existen cuenta de Clerk (plan gratuito) y aplicación Google habilitada en Clerk | No se puede demostrar el acceso con Google |
 | SUP-04 | Suposición | **[App 2]** El acceso a AWS, la región y el presupuesto se confirman con el docente | No se puede crear la instancia EC2 |
@@ -246,7 +250,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 | Fuente | FUE-01 |
 | Precondiciones | La SPA está abierta en el navegador. |
 | Entradas | `ciudad` (1–80 car.), `fecha` (AAAA-MM-DD, hoy o futura), `personas` (1–20), `gustos` (1–200 car.). |
-| Comportamiento esperado | El formulario muestra etiquetas claras; la validación en cliente (Tailwind, foco de teclado, mensajes) orienta al usuario; el botón «Generar plan» queda deshabilitado durante la espera. |
+| Comportamiento esperado | El formulario muestra etiquetas claras; la validación en cliente (Tailwind, foco de teclado, mensajes) orienta al usuario; el botón «Generar plan» queda deshabilitado durante la espera. De forma **opcional**, el usuario indica con quién viaja (Amigos, Familia o Pareja; sin opción con 1 persona y «Pareja» solo con exactamente 2): no es un campo del contrato, se añade al final de `gustos` y la longitud combinada no puede superar 200 caracteres. |
 | Salidas y postcondiciones | Un conjunto de datos válido queda listo para enviarse a RF-02; no se conserva nada al terminar. |
 | Errores o alternativas | Campo vacío o fuera de rango: se resalta el campo con mensaje; **no** se envía la petición. |
 | Dependencias | RF-02, RNF-03 |
@@ -277,31 +281,32 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 
 - **CA-RF02-01:** Dado un cuerpo con `gustos` de 201 caracteres, cuando se envía `POST /api/plan`, entonces la respuesta es `422` y el cliente de IA **no** recibe ninguna llamada (verificado con mock).
 - **CA-RF02-02:** Dado un cuerpo con `fecha` anterior a hoy, cuando se envía la petición, entonces la respuesta es `422` con el error de campo y no se consulta la IA.
-- **CA-RF02-03:** Dado un cuerpo con gustos formado solo por espacios, cuando se envía POST /api/plan, entonces la respuesta es 422 y no se consulta la IA.
-- **CA-RF02-04:** Dado un cuerpo con gustos de exactamente 200 caracteres, cuando se envía la petición, entonces se acepta y no se devuelve 422.
+- **CA-RF02-03:** Dado un cuerpo con `gustos` formado solo por espacios, cuando se envía `POST /api/plan`, entonces la respuesta es `422` y no se consulta la IA.
+- **CA-RF02-04:** Dado un cuerpo con `gustos` de exactamente 200 caracteres, cuando se envía la petición, entonces se acepta y no se devuelve `422`.
 
 #### RF-03. Generar el plan con una única llamada a la API de IA y devolver el contrato
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá, una vez validada la entrada, realizar **exactamente una** llamada a la única API de IA (OpenRouter) con timeout de 20 segundos y devolver `200` con `{"resultado": "..."}`, o `502`/`504` con el JSON de error acordado si el proveedor falla o no responde a tiempo. |
+| Enunciado | El sistema deberá, una vez validada la entrada, realizar **exactamente una** llamada a la única API de IA (OpenRouter) con timeout de 20 segundos y devolver `200` con `{"resultado": "..."}`, o `502`/`504` con el JSON de error acordado si el proveedor falla o no responde a tiempo, o `500` con el mismo formato ante un error interno no previsto. |
 | Justificación | Núcleo de la única función útil y de RES-02; el backend no expone la respuesta cruda del proveedor. |
 | Actor | Backend FastAPI |
 | Prioridad | Alta |
 | Fuente | FUE-01, FUE-04 |
 | Precondiciones | Entrada validada (RF-02); **[App 2]** token de sesión válido (RF-05); variable de entorno `AI_API_KEY` disponible. |
-| Entradas | Entrada ya validada + prompt que pide un plan de un día para la ciudad, fecha, personas y gustos indicados. |
+| Entradas | Entrada ya validada + prompt que pide un plan de un día para la ciudad, fecha, personas y gustos indicados, con **formato fijo**: tres líneas que empiezan por `Mañana:`, `Tarde:` y `Noche:` (cada etiqueta una sola vez, actividades en la misma línea separadas por `;`), sin introducción ni despedida y sin indicar el número de palabras. El frontend parte el texto por esas etiquetas (RF-04). |
 | Comportamiento esperado | Una sola petición HTTP a OpenRouter con el modelo configurado (`AI_MODEL`), protegida por `AI_TIMEOUT`; la respuesta se envuelve en `{"resultado": ...}`. |
-| Salidas y postcondiciones | `200` con el plan en texto, o error controlado `502`/`504` con `{"error": {"codigo", "mensaje"}}` sin stack trace ni secretos. |
-| Errores o alternativas | Proveedor caído → `502 IA_NO_DISPONIBLE`; timeout → `504 IA_TIMEOUT`; respuesta vacía o inesperada → se trata como `502` sin romper el contrato. |
+| Salidas y postcondiciones | `200` con el plan en texto, o error controlado `502`/`504`/`500` con `{"error": {"codigo", "mensaje"}}` sin stack trace ni secretos. |
+| Errores o alternativas | Proveedor caído → `502 IA_NO_DISPONIBLE`; timeout → `504 IA_TIMEOUT`; respuesta vacía o inesperada → se trata como `502` sin romper el contrato; error interno no previsto → `500 ERROR_INTERNO` con el mensaje genérico «Error interno.». |
 | Dependencias | DEP-01, RF-05 **[App 2]**, RNF-01 |
 
 **Criterios de aceptación:**
 
 - **CA-RF03-01:** Dada una entrada válida con el proveedor simulado, cuando se ejecuta la petición, entonces la respuesta es `200`, el cuerpo contiene `resultado` y el mock registra **una sola** llamada.
-- **CA-RF03-04:** Dado el proveedor simulado para devolver una respuesta vacía o con formato inesperado, cuando se procesa una entrada válida, entonces la respuesta es 502 con codigo: IA_NO_DISPONIBLE.
 - **CA-RF03-02:** Dado el proveedor simulado para que falle, cuando se procesa una entrada válida, entonces la respuesta es `502` con `codigo: IA_NO_DISPONIBLE`, mensaje genérico y ningún detalle interno.
 - **CA-RF03-03:** Dado el proveedor simulado para que no responda dentro de 20 s, cuando se procesa la entrada, entonces la respuesta es `504` con `codigo: IA_TIMEOUT`.
+- **CA-RF03-04:** Dado el proveedor simulado para devolver una respuesta vacía o con formato inesperado, cuando se procesa una entrada válida, entonces la respuesta es `502` con `codigo: IA_NO_DISPONIBLE`.
+- **CA-RF03-05:** Dada una entrada válida con el proveedor simulado, cuando el backend construye la petición a la IA, entonces el prompt pide las etiquetas `Mañana:`, `Tarde:` y `Noche:` que usa el frontend para repartir el plan.
 
 #### RF-04. Mostrar el resultado o el error en la misma pantalla
 
@@ -314,7 +319,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 | Fuente | FUE-01 |
 | Precondiciones | El backend ha respondido 200 o un error controlado. |
 | Entradas | `resultado` (texto) o `error` (código y mensaje). |
-| Comportamiento esperado | En `200` se muestra el plan como texto con formato conservado; en `422/401/502/504/500` se muestra un mensaje comprensible y la opción de reintentar. Junto al plan se muestra siempre un aviso visible: texto generado por IA, orientativo; comprobar sitios y horarios. |
+| Comportamiento esperado | En `200` se muestra el plan como texto con formato conservado: si trae las etiquetas `Mañana:`, `Tarde:` y `Noche:`, se reparte en tres tarjetas; si no, se muestra entero sin interpretar; en `422/401/502/504/500` se muestra un mensaje comprensible y la opción de reintentar. Junto al plan se muestra siempre un aviso visible: texto generado por IA, orientativo; comprobar sitios y horarios. |
 | Salidas y postcondiciones | Solo el último resultado permanece visible; nada se almacena (RES-03). |
 | Errores o alternativas | Cuerpo que no cumple el contrato → estado de error genérico; la IA no puede insertar marcado ejecutable. |
 | Dependencias | RF-01, RF-03, RF-05 **[App 2]** |
@@ -353,7 +358,7 @@ Una **única función útil** descrita como tres partes del mismo proceso:
 | ID | Categoría | Requisito medible | Condiciones de comprobación | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|---|
 | RNF-01 | Rendimiento | El backend responde en ≤ 20 s como máximo (timeout del proveedor configurable con `AI_TIMEOUT`) | Entrada válida con el proveedor simulado para responder tarde | La petición termina en `504` antes del límite y el frontend muestra el error sin quedar colgado | Alta |
-| RNF-02 | Seguridad y privacidad | Ni la clave de IA ni la clave secreta de Clerk aparecen en el frontend, el repositorio ni los registros | Buscar `AI_API_KEY`/`CLERK_SECRET_KEY` en el bundle compilado (`dist/`), en `.env.example` y en el historial Git | Cero coincidencias de valores reales; solo nombres ficticios en `.env.example` y `.gitignore` operativo | Alta |
+| RNF-02 | Seguridad y privacidad | Ni la clave de IA ni la clave secreta de Clerk aparecen en el frontend, el repositorio ni los registros; en producción la API no publica su documentación interactiva y sus respuestas llevan cabeceras de seguridad | Buscar `AI_API_KEY`/`CLERK_SECRET_KEY` en el bundle compilado (`dist/`), en `.env.example` y en el historial Git; pedir `/docs` y `/openapi.json` sin `DOCS_ACTIVOS=1`; revisar las cabeceras de `POST /api/plan` | Cero coincidencias de valores reales; solo nombres ficticios en `.env.example` y `.gitignore` operativo; `/docs` y `/openapi.json` → `404`; respuestas con `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security` y `Content-Security-Policy` | Alta |
 | RNF-03 | Usabilidad y accesibilidad | El usuario distingue en todo momento si la app está en entrada, espera, resultado o error, y completa la tarea sin cambiar de pantalla | Perfil nuevo que abre la URL desplegada; prueba con teclado y en móvil | La tarea (entrada → resultado) se completa en una sola pantalla, con foco visible y mensajes legibles | Alta |
 | RNF-04 | Fiabilidad y recuperación | Ante cualquier fallo externo el usuario recibe el JSON de error acordado, sin stack trace, secretos ni datos sensibles | Ejecutar pytest con el mock en modo fallo y en modo timeout; revisar la respuesta devuelta | Todos los casos devuelven 502/504 con `codigo` y `mensaje` genérico y la suite pasa sin conexión a internet | Alta |
 
@@ -391,16 +396,18 @@ enunciado impone como reglas del problema:
 
 | ID | Pantalla o interacción | Usuarios | Información y acciones necesarias | Requisitos relacionados |
 |---|---|---|---|---|
-| IU-01 | **Pantalla única** (la única que existe en ambas apps) | ACT-01 | **[App 2]** componente de acceso Clerk (modal con Google); formulario `ciudad/fecha/personas/gustos` + botón «Generar plan»; estado espera con spinner; zona de resultado con el texto del plan; zona de error con reintento | RF-01, RF-04, RF-05, RNF-03 |
+| IU-01 | **Pantalla única** (la única que existe en ambas apps) | ACT-01 | **[App 2]** componente de acceso Clerk (modal con Google); formulario `ciudad/fecha/personas/gustos` + selector opcional de compañía (Amigos/Familia/Pareja, enviado dentro de `gustos`) + botón «Generar plan»; estado espera con spinner; zona de resultado con el texto del plan; zona de error con reintento | RF-01, RF-04, RF-05, RNF-03 |
 
-> El boceto de la interfaz está en la carpeta `Figma/` del proyecto (orientativo, no vinculante).
+> Los bocetos de Figma están en `docs/evidencias/figma/` y se usan solo como **referencia visual**
+> (fondo oscuro y acento ámbar), no como estructura: incluían varias pantallas, mapa y OpenStreetMap,
+> retirados por la regla de simplicidad (decisión del 15/10/2026 en `docs/proceso.md`).
 
 ### 6.2. Interfaces con otros sistemas o dispositivos
 
 | ID | Sistema o dispositivo externo | Información intercambiada | Dirección y momento del intercambio | Formato o protocolo exigido | Respuesta ante fallos |
 |---|---|---|---|---|---|
 | INT-01 | **OpenRouter** (única API de IA, modelo `:free`) **[Ambas]** | Envía: prompt con la entrada validada. Recibe: texto del plan | Salida; una vez por envío válido, desde el backend | HTTPS + JSON con clave privada (`AI_API_KEY`), timeout 20 s | `502` si falla, `504` si excede el timeout; siempre el JSON `{"error": {codigo, mensaje}}` |
-| INT-02 | Contrato HTTP frontend ↔ backend **[Ambas]** | `POST /api/plan` con la entrada; respuesta `200/422/502/504` (y `401` en App 2) | Ambas direcciones; en cada envío | JSON documentado en la sección 4 del documento técnico; CORS con el origen real del frontend | Estado de error en la SPA con reintento; sin datos perdidos del formulario |
+| INT-02 | Contrato HTTP frontend ↔ backend **[Ambas]** | `POST /api/plan` con la entrada; respuesta `200/422/502/504/500` (y `401` en App 2) | Ambas direcciones; en cada envío | JSON documentado en la sección 4 del documento técnico; CORS con el origen real del frontend | Estado de error en la SPA con reintento; sin datos perdidos del formulario |
 | INT-03 | **Clerk** (solo App 2) | Envía: session token en `Authorization: Bearer …`. Recibe: verificación contra el emisor (JWKS) | Salida del frontend en cada llamada; verificación en backend antes de RF-02 | HTTPS + JWT (firma, emisor, caducidad, audiencia) | Token ausente/inválido/caducado → `401 NO_AUTENTICADO` sin llamar a la IA |
 
 ## 7. Casos de uso o escenarios de usuario
@@ -434,17 +441,21 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 
 ## 8. Verificación y trazabilidad
 
+> Cada `PR-xx` agrupa pruebas concretas de `docs/pruebas.md`, indicadas entre paréntesis:
+> `T..` = tests de pytest (matriz App 1/App 2), `I..` = comprobación de la interfaz,
+> `S..` = pruebas de seguridad.
+
 | Requisito | Objetivo o necesidad de origen | Criterio de aceptación | ID de prueba | Método y datos de comprobación | Resultado esperado |
 |---|---|---|---|---|---|
-| RF-01 | OBJ-01 / FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 | Prueba manual de la SPA con DevTools abiertas: envío válido, doble clic y campo vacío | Estados correctos, una sola petición y validación en cliente sin red |
-| RF-02 | OBJ-02 / FUE-01 | CA-RF02-01, CA-RF02-02, CA-RF02-03, CA-RF02-04 | PR-02 | pytest con mock del cliente de IA: `gustos` de 201 caracteres, `fecha` pasada, `gustos` solo con espacios y `gustos` de 200 caracteres | `422` y **cero** llamadas al mock en los tres primeros; el de 200 caracteres se acepta (no `422`) |
-| RF-03 | OBJ-01, OBJ-02 | CA-RF03-01, CA-RF03-02, CA-RF03-03, CA-RF03-04 | PR-03 | pytest con mock en modos: éxito, fallo, timeout y respuesta vacía o inesperada | `200` + una llamada; `502`; `504`; `502` con el JSON acordado |
-| RF-04 | OBJ-01, OBJ-03 | CA-RF04-01, CA-RF04-02, CA-RF04-03, CA-RF04-04 | PR-04 | Prueba manual: dos envíos seguidos, un error 502, un resultado con `<script>` de prueba y comprobación del aviso | Solo el último resultado, reintento funcional, HTML como texto y aviso de contenido orientativo visible |
-| RF-05 **[App 2]** | OBJ-04, RES-10 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 | pytest con verificador simulado (sin cabecera, token firmado por otra clave, token correcto) + una prueba real de acceso y cierre de sesión | `401` con cero llamadas a IA en los dos primeros; flujo normal en el tercero |
-| RNF-01 | OBJ-02 | Criterio de la sección 4 | PR-06 | pytest con mock que lanza directamente el timeout; además, prueba manual cronometrada | `504` dentro del límite, UI sin bloqueo |
-| RNF-02 | OBJ-03, RES-12 | Criterio de la sección 4 | PR-07 | Buscar claves en `dist/`, `.env.example` e historial Git; revisar `.gitignore` | Cero secretos reales; solo valores ficticios |
-| RNF-03 | OBJ-01 | Criterio de la sección 4 | PR-08 | Observación de usuario nuevo en URL desplegada, teclado y móvil | Tarea completa en una pantalla, foco y mensajes visibles |
-| RNF-04 | OBJ-02 | Criterio de la sección 4 | PR-09 | pytest con mock en fallo y timeout; inspección del cuerpo de respuesta | `502/504` con `codigo`+`mensaje`, sin stack trace; suite en verde sin internet |
+| RF-01 | OBJ-01 / FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 (I01, I02; «Validación previa al envío» del 15/10/2026) | Prueba manual de la SPA con DevTools abiertas: envío válido, doble clic y campo vacío | Estados correctos, una sola petición y validación en cliente sin red |
+| RF-02 | OBJ-02 / FUE-01 | CA-RF02-01, CA-RF02-02, CA-RF02-03, CA-RF02-04 | PR-02 (T02, T03, T04, T05, T06) | pytest con mock del cliente de IA: textos solo con espacios, `ciudad`/`gustos` en el límite (80/200) y por encima (81/201), `fecha` pasada y `personas` 0 y 21 | `422` y **cero** llamadas al mock en los casos inválidos; los de 80 y 200 caracteres se aceptan (no `422`) |
+| RF-03 | OBJ-01, OBJ-02 | CA-RF03-01, CA-RF03-02, CA-RF03-03, CA-RF03-04, CA-RF03-05 | PR-03 (T01, T07, T08, T09, T09b, T09c) | pytest con mock en modos: éxito, fallo, timeout, respuesta vacía o inesperada y error interno; captura del prompt enviado | `200` + una llamada; `502`; `504`; `502` con el JSON acordado; `500 ERROR_INTERNO`; prompt con `Mañana:`, `Tarde:` y `Noche:` |
+| RF-04 | OBJ-01, OBJ-03 | CA-RF04-01, CA-RF04-02, CA-RF04-03, CA-RF04-04 | PR-04 (I02, I03, I04, I05) | Prueba manual: dos envíos seguidos, un error 502, un resultado con `<script>` de prueba y comprobación del aviso | Solo el último resultado, reintento funcional, HTML como texto y aviso de contenido orientativo visible |
+| RF-05 **[App 2]** | OBJ-04, RES-10 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 (T10, T11, T12, T13) | pytest con verificador simulado (sin cabecera, token firmado por otra clave, token correcto) + una prueba real de acceso y cierre de sesión | `401` con cero llamadas a IA en los dos primeros; flujo normal en el tercero |
+| RNF-01 | OBJ-02 | Criterio de la sección 4 | PR-06 (T08; prueba manual con `AI_TIMEOUT=1` del 15/10/2026) | pytest con mock que lanza directamente el timeout; además, prueba manual cronometrada | `504` dentro del límite, UI sin bloqueo |
+| RNF-02 | OBJ-03, RES-12 | Criterio de la sección 4 | PR-07 (S04, S08, S14, T09d) | Buscar claves en `dist/`, `.env.example` e historial Git; revisar `.gitignore`; pedir `/docs` y `/openapi.json` sin `DOCS_ACTIVOS`; revisar cabeceras de respuesta | Cero secretos reales; solo valores ficticios; `/docs` → `404`; cabeceras de seguridad presentes |
+| RNF-03 | OBJ-01 | Criterio de la sección 4 | PR-08 (I01, I02, I03; pendiente en URL desplegada) | Observación de usuario nuevo en URL desplegada, teclado y móvil | Tarea completa en una pantalla, foco y mensajes visibles |
+| RNF-04 | OBJ-02 | Criterio de la sección 4 | PR-09 (T07, T08, T09, T09b) | pytest con mock en fallo, timeout y error interno; inspección del cuerpo de respuesta | `502/504/500` con `codigo`+`mensaje`, sin stack trace; suite en verde sin internet |
 
 ## 9. Cuestiones pendientes
 
@@ -457,6 +468,7 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 | PEN-05 | **[App 2]** Acceso a AWS, región y presupuesto; desactivación de recursos al finalizar | RES-11, SUP-04 | Docente / equipo | Antes de H11 | Pendiente |
 | PEN-06 | **[App 2]** Configuración final de Clerk (orígenes, Google como proveedor) y URLs de EC2 | RF-05, DEP-03 | Equipo | Antes de H10 | Pendiente |
 | PEN-07 | Qué debe mostrar el backend por terminal (registro de peticiones) | RNF-02, RNF-04 | Docente / equipo | Fase backend (H2) | Resuelta 14/10/2026: nada propio; solo el access log de uvicorn, sin prompt, respuesta ni clave |
+| PEN-08 | Limitar el tamaño del cuerpo de la petición con un `413` propio (hallazgo S13 de `docs/pruebas.md`) | RF-02, INT-02, RNF-02 | Equipo | Antes de H7 | Pendiente. Propuesta: riesgo aceptado sin código nuevo (Vercel ya limita el cuerpo a 4,5 MB y Pydantic rechaza con `422` antes de llamar a la IA; un `413` añadiría un código fuera del contrato). Ver `docs/arreglos-seguridad.md` |
 
 ## 10. Revisión y conformidad
 
@@ -467,7 +479,7 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 - [x] Cada requisito tiene un identificador único (RF-01…05, RNF-01…04, DAT, RN, IU, INT, CU).
 - [x] Los requisitos son claros, necesarios y no se contradicen.
 - [x] Cada requisito funcional expresa una obligación y tiene criterios de aceptación verificables («Dado/cuando/entonces»).
-- [x] Se contemplan los errores y los casos límite relevantes (422, 502, 504, 401, límites de longitud, envío duplicado, HTML en el resultado).
+- [x] Se contemplan los errores y los casos límite relevantes (422, 502, 504, 500, 401, límites de longitud, envío duplicado, HTML en el resultado).
 - [x] Los requisitos no funcionales incluyen medidas y condiciones de comprobación.
 - [x] Los datos, las reglas de negocio y las interfaces están descritos (5.1 transitorios; 5.2 con la justificación de por qué no hay reglas de dominio).
 - [x] Todos los requisitos están relacionados con su origen y su comprobación (sección 8).
@@ -484,15 +496,16 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 
 | Revisor y rol | Versión revisada | Fecha | Resultado | Observaciones |
 |---|---|---|---|---|
-| Integrante A (equipo) | 2.0 | 08/10/2026 | Conforme | Revisión cruzada: coherencia con el enunciado y con el documento técnico v3. |
-| Integrante B (equipo) | 2.0 | 08/10/2026 | Conforme | Revisión cruzada: RF/RNF verificables y trazabilidad completa. |
+| Alberto Ortiz (equipo) | — | — | Pendiente | Revisión cruzada prevista en H12: revisa la parte redactada por Manuel. |
+| Manuel Montalbán (equipo) | — | — | Pendiente | Revisión cruzada prevista en H12: revisa la parte redactada por Alberto. |
 | Docente | — | — | No atribuido | Esta revisión se registra solo cuando el docente la realice. |
 
 ## Anexos
 
-- **Anexo A — Documento técnico:** `planificador-itinerarios-documento-tecnico.md` (v3).
+- **Anexo A — Documento técnico:** `docs/planificador-itinerarios-documento-tecnico.md` (v3).
   Contrato HTTP, arquitectura, código de referencia, pruebas, Vercel, Spec Kit, Docker/EC2.
-- **Anexo B — Bocetos:** carpeta `Figma/` (orientativos; pantalla única con formulario y resultado).
+- **Anexo B — Bocetos:** carpeta `docs/evidencias/figma/` (móvil y ordenador). **Referencia visual**
+  (colores y estilo), no estructura: las pantallas de mapa y OpenStreetMap quedaron fuera del alcance.
 - **Anexo C — Revisión App 2 (Clerk):** revisión claramente identificada de esta ERS, según
   pide el enunciado para la segunda aplicación:
 

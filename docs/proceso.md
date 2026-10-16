@@ -36,6 +36,7 @@ innecesarias.
 | 16/10/2026 | Decisión | **`/docs`, `/redoc` y `/openapi.json` solo en local:** se activan con la variable `DOCS_ACTIVOS=1`; en Vercel no se define y dan `404` (hallazgo S08) | Verificado en local con la variable a `1` y a `0`; `.env.example` actualizado | Manuel |
 | 16/10/2026 | Decisión | **Cabeceras de seguridad en el backend** (hallazgo S14) con un middleware en `main.py` y uvicorn arrancado con `--no-server-header`. No se usa el código de `docs/arreglos-seguridad.md` tal cual: `headers.pop` no existe en Starlette (todas las peticiones darían `500`) y la CSP en `/docs` dejaba Swagger en blanco, así que la CSP se aplica solo a `/api/` | Test T09d; cabeceras comprobadas en la pestaña Network; CORS intacto | Manuel |
 | 16/10/2026 | Decisión | **Propuesta (pendiente de acordar):** no implementar el `413` por tamaño de cuerpo (hallazgo S13). Vercel ya limita el cuerpo a 4,5 MB y Pydantic rechaza con `422` antes de llamar a la IA; un `413` propio añadiría un código fuera del contrato de la ERS | `docs/arreglos-seguridad.md` §Nota de implementación | Manuel |
+| 16/10/2026 | Decisión | **ERS v2.1:** se pone al día con lo implementado (error `500`, formato `Mañana:`/`Tarde:`/`Noche:`, compañía opcional, Figma como referencia visual, `/docs` y cabeceras en RNF-02, PEN-08) y la trazabilidad (§8) se enlaza con los IDs reales de `docs/pruebas.md`. La carpeta `Figma/` se mueve a `docs/evidencias/figma/` (`git mv`, conserva el historial) | Historial de cambios de la ERS; README §Estructura | Manuel |
 
 ## Problemas abiertos
 
