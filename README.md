@@ -26,9 +26,9 @@ pantalla**.
 ```text
 planificador-itinerarios/
 ├── README.md                                        # este archivo
-├── Figma/                                           # bocetos de la pantalla única
 ├── docs/
 │   ├── ERS.md            # ERS (entregable «ERS», plantilla del docente)
+│   ├── evidencias/figma/ # bocetos de Figma (solo referencia visual, ver ERS Anexo B)
 │   ├── planificador-itinerarios-documento-tecnico.md  # documento técnico v3 (arquitectura, contrato, despliegues)
 │   ├── proceso.md        # decisiones e incidencias (a medida que ocurren)
 │   ├── pruebas.md        # cómo se ejecutan, matriz y prueba real documentada
