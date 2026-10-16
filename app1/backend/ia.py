@@ -33,12 +33,22 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
     """
     # Construimos el prompt con los datos del formulario.
     #    {fecha} se convierte solo a texto con el formato AAAA-MM-DD.
+    #    El frontend parte la respuesta por "Mañana:", "Tarde:" y "Noche:"
+    #    para pintar tres tarjetas: por eso se le da a la IA el formato exacto.
     prompt = (
         f"Eres un asistente de viajes. Propón un plan para UN solo día en {ciudad} "
         f"el {fecha}, para {personas} persona(s) a las que les gusta: {gustos}.\n"
-        "Organízalo en mañana, tarde y noche, con dos o tres actividades por franja.\n"
+        "Usa exactamente este formato: tres líneas, una por franja, y cada "
+        "etiqueta UNA sola vez. Escribe las dos o tres actividades de cada "
+        "franja en la misma línea, separadas por punto y coma, y empieza "
+        "con mayúscula:\n"
+        "Mañana: Primera actividad; segunda actividad; tercera actividad\n"
+        "Tarde: Primera actividad; segunda actividad; tercera actividad\n"
+        "Noche: Primera actividad; segunda actividad; tercera actividad\n"
+        "No escribas introducción ni despedida, y no uses las palabras "
+        "mañana, tarde o noche seguidas de dos puntos en ningún otro sitio.\n"
         "Responde en español, en texto plano (sin HTML ni Markdown) "
-        "y en menos de 250 palabras."
+        "y en menos de 250 palabras. No indiques el número de palabras."
     )
 
     try:
