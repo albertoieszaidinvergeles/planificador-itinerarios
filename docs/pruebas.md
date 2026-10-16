@@ -29,12 +29,14 @@ pytest -v
 | T08 | Timeout del proveedor | `httpx.post` simulado lanza `httpx.ReadTimeout` **al instante** (no se esperan 20 s) | `ia.py` lo traduce a `IATimeout` → `504 IA_TIMEOUT` con el JSON del contrato | ✅ |
 | T09 | Respuesta inesperada del proveedor | `httpx.post` simulado devuelve 200 con `{}`, `choices` vacío, texto vacío y texto `None` | Los 4 casos → `502 IA_NO_DISPONIBLE`; el contrato no se rompe | ✅ |
 | T09b | Error inesperado del servidor | `consultar_ia` simulada lanza `RuntimeError` | `500 ERROR_INTERNO` con mensaje genérico «Error interno.» | ✅ |
+| T09c | Formato pedido a la IA | `httpx.post` simulado captura el cuerpo que se enviaría a OpenRouter | `200` y el prompt contiene `Mañana:`, `Tarde:` y `Noche:` (el frontend parte el texto por ellas) | ✅ |
 
 ### Ejecuciones de la suite
 
 | Fecha | Resultado | Notas |
 |---|---|---|
 | 16/10/2026 | ✅ `17 passed` (pytest 9.1.1, local, sin llamadas a OpenRouter) | Comprobado que los tests detectan fallos: con `max_length=90` en `ciudad` falla T04; con el `except httpx.HTTPError` antes que el de `TimeoutException` en `ia.py` falla T08 (da 502 en vez de 504). Ambos cambios se deshicieron |
+| 16/10/2026 | ✅ `18 passed` (pytest 9.1.1, local, sin llamadas a OpenRouter) | Tras el cambio del prompt; añadido T09c |
 
 ## Matriz de casos — App 2 (además de los anteriores)
 
@@ -56,6 +58,7 @@ pytest -v
 | 14/10/2026 | `uvicorn main:app --reload` y `POST /api/plan` desde `http://127.0.0.1:8000/docs` con Sevilla / 2026-10-20 / 2 / «museos y tapas»; repetida sin el campo `gustos` | local, `nvidia/nemotron-3-super-120b-a12b:free` | Caso válido: `200` con `{"resultado": "..."}` (~14 s). Sin `gustos`: `422` inmediato, sin llamada a la IA | Página `/docs` de FastAPI |
 | 14/10/2026 | `POST /api/plan` desde `/docs` con Sevilla / 2026-10-20 / 2 / «museos y comida típica», tras desactivar el razonamiento del modelo (`"reasoning": {"enabled": false}`) | local, `nvidia/nemotron-3-super-120b-a12b:free` | `200` con el plan en **~5 s** (antes ~14 s). En la terminal solo aparece la línea del access log de uvicorn, sin prompt, respuesta ni clave | Página `/docs` y terminal |
 | 15/10/2026 | `POST /api/plan` desde `/docs` con los límites de H2 | local, mismo modelo | Válido: `200`. `ciudad: "   "`, `fecha: "2020-01-01"` («La fecha no puede ser anterior a hoy.»), `personas: 0` y `21`, `gustos` > 200 caracteres: `422` inmediato, sin llamada a la IA. `AI_TIMEOUT=1`: `504 IA_TIMEOUT`. `AI_MODEL=modelo-que-no-existe`: `502 IA_NO_DISPONIBLE`; los dos con la forma `{"error": {"codigo", "mensaje"}}`. Nota: con `...:free-xxx` OpenRouter **no** dio error y respondió con el modelo normal | Página `/docs` |
+| 16/10/2026 | Flujo completo (Vite + uvicorn) tras cambiar el prompt: Sevilla, Granada, Madrid y otros datos | local, mismo modelo | Primer formato de ejemplo: Granada / «naturaleza y tapas» dio **9 tarjetas** (etiqueta repetida en cada actividad) y en minúscula. Con el formato corregido: varias pruebas con **exactamente 3 tarjetas** Mañana/Tarde/Noche, con mayúscula, sin introducción ni «(N palabras)» | Pantalla del frontend (captura del fallo, sin secretos) |
 
 ## Comprobación de la interfaz (Fase D)
 

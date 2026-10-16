@@ -226,3 +226,22 @@ def test_error_inesperado_da_500(monkeypatch):
     assert respuesta.json() == {
         "error": {"codigo": "ERROR_INTERNO", "mensaje": "Error interno."}
     }
+    
+
+def test_prompt_pide_las_etiquetas_del_frontend(monkeypatch):
+        """El prompt pide "Mañana:", "Tarde:" y "Noche:": el frontend parte el texto por ellas."""
+        enviado = {}  # aquí guardaremos el cuerpo que se mandaría a OpenRouter
+    
+        def captura(url, **kwargs):
+            # httpx.post(URL, headers=..., json=..., timeout=...): el prompt va en kwargs["json"].
+            enviado.update(kwargs["json"])
+            return RespuestaFalsa({"choices": [{"message": {"content": PLAN_FALSO}}]})
+    
+        monkeypatch.setattr(ia.httpx, "post", captura)
+        respuesta = cliente.post("/api/plan", json=entrada_valida())
+    
+        assert respuesta.status_code == 200
+        prompt = enviado["messages"][0]["content"]  # el texto que leería la IA
+        for etiqueta in ("Mañana:", "Tarde:", "Noche:"):
+            assert etiqueta in prompt
+    
