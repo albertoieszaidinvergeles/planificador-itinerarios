@@ -1,0 +1,5 @@
+# Dependencias SOLO para desarrollo (tests). Vercel instala requirements.txt,
+# así que pytest no viaja a producción.
+# -r incluye todo lo de requirements.txt para no repetirlo.
+-r requirements.txt
+pytest==9.1.1
