@@ -244,4 +244,14 @@ def test_prompt_pide_las_etiquetas_del_frontend(monkeypatch):
         prompt = enviado["messages"][0]["content"]  # el texto que leería la IA
         for etiqueta in ("Mañana:", "Tarde:", "Noche:"):
             assert etiqueta in prompt
-    
+
+
+def test_cabeceras_de_seguridad(ia_falsa):
+    """Las respuestas de la API llevan las cabeceras de seguridad (S14),
+    tanto en el caso válido (200) como en un error de validación (422)."""
+    for datos in (entrada_valida(), entrada_valida(personas=0)):
+        respuesta = cliente.post("/api/plan", json=datos)
+
+        for nombre, valor in main.CABECERAS_SEGURIDAD.items():
+            assert respuesta.headers[nombre] == valor
+        assert respuesta.headers["Content-Security-Policy"] == main.CSP_API

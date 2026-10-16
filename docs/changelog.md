@@ -23,6 +23,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 15/10/2026 | Alberto | H6 | App 1 | Chips «¿Con quién vais?» con reglas por número de personas, resultado en tarjetas Mañana/Tarde/Noche y limpieza del recuento de palabras que añade el modelo | | `feat/frontend-formulario` |
 | 15-16/10/2026 | Manuel | H3 | App 1 | Tests con pytest y la IA simulada: `tests/test_plan.py` (T01–T09 y 500, 17 casos), `pytest.ini` y `requirements-dev.txt`; documentación en `pruebas.md` | 80 | `test/pytest-backend` |
 | 16/10/2026 | Manuel | H5 | App 1 | Prompt de `ia.py` con formato fijo `Mañana:`/`Tarde:`/`Noche:` para las tarjetas del frontend (sin introducción ni recuento de palabras); test T09c; pruebas reales y documentación | 40 | `fix/prompt-etiquetas` |
+| 16/10/2026 | Manuel | H2 | App 1 | Arreglos de seguridad del backend: `/docs` solo con `DOCS_ACTIVOS=1`, cabeceras de seguridad (middleware) y `--no-server-header`; test T09d; documentación | 30 | `fix/seguridad-backend` |
 
 ## Tiempo total por hito
 
@@ -30,7 +31,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 |---|---|---|---|
 | H0 | 120 | 100 | 220 |
 | H1 | 240 | | 240 |
-| H2 | 60 | | 60 |
+| H2 | 90 | | 90 |
 | H3 | 80 | | 80 |
 | H4 | | 200 | 200 |
 | H5 | 40 | | 40 |

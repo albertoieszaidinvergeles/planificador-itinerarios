@@ -20,8 +20,19 @@ from ia import IAError, IATimeout, consultar_ia
 # Cargamos el .env aquí también: así main.py no depende de que ia.py lo haga.
 load_dotenv()
 
+# --- /docs solo en local (prueba de seguridad S08) ---
+# Swagger (/docs), ReDoc (/redoc) y el esquema (/openapi.json) explican la API
+# entera a cualquiera. Solo se activan si DOCS_ACTIVOS=1 (en el .env local).
+# En Vercel no se define la variable, así que esas rutas dan 404.
+DOCS_ACTIVOS = os.getenv("DOCS_ACTIVOS", "0") == "1"
+
 # Crea la aplicación. uvicorn (y Vercel) buscan una variable llamada "app".
-app = FastAPI(title="Planificador de itinerarios")
+app = FastAPI(
+    title="Planificador de itinerarios",
+    docs_url="/docs" if DOCS_ACTIVOS else None,  # None = esa ruta no existe
+    redoc_url="/redoc" if DOCS_ACTIVOS else None,
+    openapi_url="/openapi.json" if DOCS_ACTIVOS else None,
+)
 
 # --- CORS ---
 # CORS_ORIGINS puede tener varias direcciones separadas por comas.
@@ -38,6 +49,43 @@ app.add_middleware(
     allow_methods=["POST"],  # nuestro único endpoint usa POST
     allow_headers=["Content-Type"],  # el frontend envía JSON
 )
+
+# --- Cabeceras de seguridad (prueba de seguridad S14) ---
+# Instrucciones para el navegador que reducen ataques comunes.
+CABECERAS_SEGURIDAD = {
+    # No "adivinar" el tipo de contenido: si decimos JSON, es JSON.
+    "X-Content-Type-Options": "nosniff",
+    # Al salir hacia otra web, no enviar nuestra URL completa.
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    # La API no necesita cámara, micrófono, ubicación ni pagos.
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    # Usar siempre HTTPS (el navegador la ignora si llega por http, como en local).
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+}
+
+# CSP muy estricta: la API solo devuelve JSON y no carga nada.
+# Solo se aplica en /api/: en /docs bloquearía el JavaScript de Swagger.
+CSP_API = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+
+
+@app.middleware("http")
+async def cabeceras_de_seguridad(request: Request, call_next):
+    """Añade las cabeceras de seguridad a cada respuesta.
+
+    Un middleware se ejecuta en TODAS las peticiones: deja pasar la petición
+    (call_next), recibe la respuesta y le añade cabeceras antes de enviarla.
+    Al declararse después de CORS, también cubre las respuestas de CORS.
+    """
+    respuesta = await call_next(request)  # la petición sigue su camino normal
+
+    for nombre, valor in CABECERAS_SEGURIDAD.items():
+        # setdefault: añade la cabecera solo si no existe (no pisa otras).
+        respuesta.headers.setdefault(nombre, valor)
+
+    if request.url.path.startswith("/api/"):
+        respuesta.headers.setdefault("Content-Security-Policy", CSP_API)
+
+    return respuesta
 
 
 class Entrada(BaseModel):

@@ -8,10 +8,29 @@
 
 | # | Arreglar | Dónde | Quién | Estado |
 |---|---|---|---|---|
-| 1 | Límite de tamaño del cuerpo (`413`) | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
+| 1 | Límite de tamaño del cuerpo (`413`) | `app1/backend/main.py` | Manuel | 💬 Propuesta: riesgo aceptado, sin código (ver nota) — pendiente de acordar en equipo |
 | 2 | Rate limit en el borde (`429`) + alerta de gasto | SE ARREGLA EN VERCEL | Equipo | ⏳ Pendiente |
-| 3 | Desactivar `/docs`, `/redoc`, `/openapi.json` en producción | `app1/backend/main.py` | Manuel | ⏳ Pendiente |
-| 4 | Cabeceras de seguridad del backend + ocultar `server: uvicorn` | `app1/backend/main.py` + arranque de uvicorn | Manuel | ⏳ Pendiente |
+| 3 | Desactivar `/docs`, `/redoc`, `/openapi.json` en producción | `app1/backend/main.py` | Manuel | ✅ Hecho 16/10/2026 (`DOCS_ACTIVOS`) |
+| 4 | Cabeceras de seguridad del backend + ocultar `server: uvicorn` | `app1/backend/main.py` + arranque de uvicorn | Manuel | ✅ Hecho 16/10/2026 (con cambios respecto a esta guía, ver nota) |
+
+### Nota de implementación (16/10/2026, Manuel)
+
+- **Punto 4 — el código de la guía no se puede usar tal cual:**
+  - `respuesta.headers.pop("server", None)` **falla**: las cabeceras de Starlette (`MutableHeaders`, Starlette 1.8.0)
+    no tienen método `pop`. Con ese código, **todas** las peticiones habrían acabado en `500`.
+  - Además la cabecera `server: uvicorn` no la añade FastAPI sino uvicorn **al enviar** la respuesta, así que el
+    middleware no puede verla. Se quita arrancando con `uvicorn main:app --reload --no-server-header`.
+  - La CSP `default-src 'none'` se aplica **solo a `/api/`**: en `/docs` dejaba Swagger en blanco (bloquea su JavaScript).
+  - `Strict-Transport-Security` se envía siempre: el navegador la ignora si llega por `http` (local).
+  - Verificado: 19 tests en verde (test nuevo de cabeceras), cabeceras visibles en la pestaña Network, CORS intacto
+    y sin `server: uvicorn`.
+- **Punto 3:** `/docs`, `/redoc` y `/openapi.json` solo existen con `DOCS_ACTIVOS=1` (en el `.env` local y en
+  `.env.example`); sin la variable → `404`. Verificado en local en los dos estados.
+- **Punto 1 — propuesta de no implementarlo:** en producción Vercel ya rechaza cuerpos de más de 4,5 MB; y un cuerpo
+  grande que llegue lo rechaza Pydantic con `422` **antes** de llamar a la IA (no gasta cuota). Un `413` propio añadiría
+  un código que no está en el contrato de la ERS. Se propone documentarlo como riesgo aceptado; pendiente de decidir
+  entre los dos.
+
 ---
 
 ## 1. Límite de tamaño del cuerpo → `413`
