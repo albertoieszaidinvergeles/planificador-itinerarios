@@ -21,6 +21,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 15/10/2026 | Alberto | H4 | App 1 | Formulario único con validación en cliente, llamada a `POST /api/plan` y los cuatro estados de la pantalla única (entrada, espera, resultado, error) | | `feat/frontend-formulario` |
 | 15/10/2026 | Alberto | H6 | App 1 | Diseño: tema oscuro de Figma con acento ámbar + modo claro conmutable en memoria, responsive, foco de teclado, resumen lateral y aviso de IA generado | | `feat/frontend-formulario` |
 | 15/10/2026 | Alberto | H6 | App 1 | Chips «¿Con quién vais?» con reglas por número de personas, resultado en tarjetas Mañana/Tarde/Noche y limpieza del recuento de palabras que añade el modelo | | `feat/frontend-formulario` |
+| 15-16/10/2026 | Manuel | H3 | App 1 | Tests con pytest y la IA simulada: `tests/test_plan.py` (T01–T09 y 500, 17 casos), `pytest.ini` y `requirements-dev.txt`; documentación en `pruebas.md` | 80 | `test/pytest-backend` |
 
 ## Tiempo total por hito
 
@@ -29,5 +30,6 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H0 | 120 | 100 | 220 |
 | H1 | 240 | | 240 |
 | H2 | 60 | | 60 |
+| H3 | 80 | | 80 |
 | H4 | | 200 | 200 |
 | H6 | | 130 | 130 |

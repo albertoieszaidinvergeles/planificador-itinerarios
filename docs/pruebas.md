@@ -4,10 +4,14 @@
 
 ```bash
 cd app1/backend        # (App 2: cd app2/backend)
+pip install -r requirements-dev.txt   # solo la primera vez: dependencias + pytest
 pytest -v
 ```
 
-- La suite **nunca** consulta OpenRouter: `ia.py` se sustituye por un mock.
+- App 1: tests en `app1/backend/tests/test_plan.py`; configuración en `app1/backend/pytest.ini`.
+  `pytest` solo está en `requirements-dev.txt`, para que no se instale en producción (Vercel usa `requirements.txt`).
+- La suite **nunca** consulta OpenRouter: se sustituye `consultar_ia` (o `httpx.post` dentro de `ia.py`) por un mock,
+  y un fixture `autouse` bloquea `httpx.post` en todos los tests por si alguno intentara llamar de verdad.
 - Debe pasar **sin conexión a internet** y sin créditos disponibles.
 - La prueba real de integración (abajo) se ejecuta a mano y se documenta aquí.
 
@@ -15,15 +19,22 @@ pytest -v
 
 | # | Caso | Entrada de prueba | Comprobación | Resultado |
 |---|---|---|---|---|
-| T01 | Entrada válida | Sevilla / 2026-10-10 / 2 / «museos y tapas» | `200`, cuerpo `{"resultado": ...}`, **una sola** llamada al mock | ⬜ |
-| T02 | Entrada vacía o solo espacios | `gustos: "   "` | `422`, **cero** llamadas al mock | ⬜ |
-| T03 | Límite de longitud (acepta) | `gustos` con 200 caracteres | `200` (o pasa la validación) | ⬜ |
-| T04 | Límite superado (rechaza) | `gustos` con 201 caracteres | `422` y sin llamada a la IA | ⬜ |
-| T05 | Fecha pasada | `fecha` anterior a hoy | `422` con detalle de campo | ⬜ |
-| T06 | Personas fuera de rango | `personas: 0` y `personas: 21` | `422` en ambos | ⬜ |
-| T07 | Fallo del proveedor | mock en modo excepción | `502 IA_NO_DISPONIBLE`, mensaje genérico, sin stack trace ni secretos | ⬜ |
-| T08 | Timeout del proveedor | mock con demora > `AI_TIMEOUT` (20 s) | `504 IA_TIMEOUT` dentro del límite | ⬜ |
-| T09 | Respuesta inesperada del proveedor | mock devuelve vacío o basura | Se trata como `502`; el contrato no se rompe | ⬜ |
+| T01 | Entrada válida | Sevilla / hoy / 2 / «museos y tapas» | `200`, cuerpo `{"resultado": ...}`, **una sola** llamada al mock | ✅ |
+| T02 | Entrada vacía o solo espacios | `ciudad: "   "` y `gustos: "   "` | `422`, **cero** llamadas al mock | ✅ |
+| T03 | Límite de longitud (acepta) | `ciudad` con 80 y `gustos` con 200 caracteres | `200` | ✅ |
+| T04 | Límite superado (rechaza) | `ciudad` con 81 y `gustos` con 201 caracteres | `422` y sin llamada a la IA | ✅ |
+| T05 | Fecha pasada | `fecha` de ayer | `422` con `loc: ["body", "fecha"]` y sin llamada a la IA | ✅ |
+| T06 | Personas fuera de rango | `personas: 0` y `personas: 21` | `422` en ambos y sin llamada a la IA | ✅ |
+| T07 | Fallo del proveedor | `consultar_ia` simulada lanza `IAError` | `502 IA_NO_DISPONIBLE`; JSON **idéntico** al del contrato (sin stack trace ni secretos) | ✅ |
+| T08 | Timeout del proveedor | `httpx.post` simulado lanza `httpx.ReadTimeout` **al instante** (no se esperan 20 s) | `ia.py` lo traduce a `IATimeout` → `504 IA_TIMEOUT` con el JSON del contrato | ✅ |
+| T09 | Respuesta inesperada del proveedor | `httpx.post` simulado devuelve 200 con `{}`, `choices` vacío, texto vacío y texto `None` | Los 4 casos → `502 IA_NO_DISPONIBLE`; el contrato no se rompe | ✅ |
+| T09b | Error inesperado del servidor | `consultar_ia` simulada lanza `RuntimeError` | `500 ERROR_INTERNO` con mensaje genérico «Error interno.» | ✅ |
+
+### Ejecuciones de la suite
+
+| Fecha | Resultado | Notas |
+|---|---|---|
+| 16/10/2026 | ✅ `17 passed` (pytest 9.1.1, local, sin llamadas a OpenRouter) | Comprobado que los tests detectan fallos: con `max_length=90` en `ciudad` falla T04; con el `except httpx.HTTPError` antes que el de `TimeoutException` en `ia.py` falla T08 (da 502 en vez de 504). Ambos cambios se deshicieron |
 
 ## Matriz de casos — App 2 (además de los anteriores)
 
