@@ -1,0 +1,12 @@
+# Nada de esto se despliega a Vercel.
+# Seguridad primero: el .env local NUNCA sube (las variables se ponen en el panel).
+.env
+.env.*
+!.env.example
+.vercel/
+
+# Pruebas y cachés de Python
+tests/
+__pycache__/
+.pytest_cache/
+*.pyc

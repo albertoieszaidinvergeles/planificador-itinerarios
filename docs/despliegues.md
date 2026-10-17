@@ -18,7 +18,7 @@
 | Proyecto | Raíz | Publica | Variables |
 |---|---|---|---|
 | `app1-frontend` | `app1/frontend` | estáticos de Vite (`dist/`) | `VITE_API_BASE_URL` (pública) |
-| `app1-backend` | `app1/backend` | FastAPI (runtime Python, `main.py` exporta `app`) | `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` + origen CORS del frontend |
+| `app1-backend` | `app1/backend` | FastAPI (runtime Python): `api/index.py` reexporta el `app` de `main.py` y `vercel.json` reescribe todo a `/api/index`; `maxDuration: 60` | `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` + origen CORS del frontend (**sin** `DOCS_ACTIVOS`: en Vercel `/docs` debe dar 404) |
 | `app2-frontend` | `app2/frontend` | estáticos de Vite | `VITE_API_BASE_URL`, `VITE_CLERK_PUBLISHABLE_KEY` |
 | `app2-backend` | `app2/backend` | FastAPI | claves de IA + `CLERK_SECRET_KEY` (si la integración la requiere) + CORS con `Authorization` |
 
@@ -35,6 +35,21 @@ vercel deploy --prod
 
 - Distinguir **Development / Preview / Production**; cambiar variables implica volver a desplegar.
 - Comprobar preflight y cabeceras CORS del backend contra el origen real del frontend.
+
+### 2.1b Orden de despliegue de App 1 (evita el problema de CORS)
+
+El front necesita la URL del back y el back necesita el origen del front, así que el orden es:
+
+1. Desplegar **`app1-backend`** y anotar su URL (`https://xxxx.vercel.app`).
+2. Probarla: `curl -X POST https://xxxx.vercel.app/api/plan -H "Content-Type: application/json" -d "{}"` → tiene que devolver `422`.
+3. Poner esa URL en `VITE_API_BASE_URL` de `app1-frontend` y desplegar el **front**.
+4. Añadir la URL del front a `CORS_ORIGINS` del backend (separada por comas si hay varias) y **volver a desplegar el backend**: cambiar una variable crea un despliegue nuevo.
+5. Probar el flujo completo desde el front desplegado y cerrar **S19** (cabeceras del frontend en producción).
+
+Notas:
+
+- El `.env` local **no se sube** (`.vercelignore`); las variables se ponen en el panel o con `vercel env add`.
+- `main.py`, `ia.py` y `formato.py` no se tocan para desplegar: `load_dotenv()` sin `.env` no hace nada y `--no-server-header` es flag de uvicorn, que en Vercel no se usa.
 
 ### 2.2 Comprobación de cierre (ambas apps en Vercel)
 
