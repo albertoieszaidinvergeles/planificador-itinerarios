@@ -33,8 +33,8 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 |---|---|---|---|
 | H0 | 150 | 100 | 250 |
 | H1 | 240 | | 240 |
-| H2 | 90 | 90 | 180 |
-| H3 | 80 | | 80 |
+| H2 | 90 | | 180 |
+| H3 | 80 | 90 | 170 |
 | H4 | | 200 | 200 |
 | H5 | 40 | | 40 |
 | H6 | | 130 | 130 |
