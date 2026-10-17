@@ -2,6 +2,7 @@ import os
 from datetime import date
 import httpx
 
+import formato  # saneado de datos y comprobación del formato del plan (S18)
 from dotenv import load_dotenv
 
 
@@ -31,6 +32,13 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
 
     Hace UNA sola llamada. Si algo falla, lanza IATimeout o IAError.
     """
+    # S18 (solo se añade, no se toca lo de abajo): los datos del usuario se
+    # sanean ANTES de entrar en el prompt. Un salto de línea serviría para
+    # inyectar una línea nueva con apariencia de instrucción, y una
+    # «Mañana:» escrita a mano se confundiría con una etiqueta del formato.
+    ciudad = formato.sanear_dato(ciudad)
+    gustos = formato.sanear_dato(gustos)
+
     # Construimos el prompt con los datos del formulario.
     #    {fecha} se convierte solo a texto con el formato AAAA-MM-DD.
     #    El frontend parte la respuesta por "Mañana:", "Tarde:" y "Noche:"
@@ -85,4 +93,11 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
     if not isinstance(texto, str) or not texto.strip():
         raise IAError()
     
+    # S18 (solo se añade): comprobamos que la respuesta es un plan de verdad.
+    # Si la IA obedeciera una inyección de prompt y no devolviera las tres
+    # líneas, no se pinta nada: IAError se traduce en un 502 con la forma
+    # del contrato. El motivo se queda en el servidor (en el log de uvicorn).
+    if (motivo := formato.comprobar_plan(texto.strip())) is not None:
+        raise IAError(motivo)
+
     return texto.strip() # Se devuelve el texto
