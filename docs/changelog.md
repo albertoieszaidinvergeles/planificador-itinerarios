@@ -25,6 +25,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 16/10/2026 | Manuel | H5 | App 1 | Prompt de `ia.py` con formato fijo `Mañana:`/`Tarde:`/`Noche:` para las tarjetas del frontend (sin introducción ni recuento de palabras); test T09c; pruebas reales y documentación | 40 | `fix/prompt-etiquetas` |
 | 16/10/2026 | Manuel | H2 | App 1 | Arreglos de seguridad del backend: `/docs` solo con `DOCS_ACTIVOS=1`, cabeceras de seguridad (middleware) y `--no-server-header`; test T09d; documentación | 30 | `fix/seguridad-backend` |
 | 16/10/2026 | Manuel | H0 | Ambas | ERS v2.1: puesta al día con lo implementado (500, formato del prompt, compañía, Figma, RNF-02, PEN-08) y trazabilidad enlazada con `pruebas.md`; `Figma/` movido a `docs/evidencias/figma/` | 30 | `docs/ers-v2.1` |
+| 17/10/2026 | Alberto | H2 | App 1 | Mitigación del hallazgo S18 (inyección de prompt): módulo nuevo `app1/backend/formato.py` (saneado de `ciudad`/`gustos` antes del prompt y comprobación del formato de la respuesta), **solo adiciones** en `ia.py` sin tocar el prompt, tests T09e/T09f en `tests/test_formato.py` y documentación en `pruebas.md` | 90 | `fix/s18-inyeccion-prompt` (PR #12) |
 
 ## Tiempo total por hito
 
@@ -32,7 +33,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 |---|---|---|---|
 | H0 | 150 | 100 | 250 |
 | H1 | 240 | | 240 |
-| H2 | 90 | | 90 |
+| H2 | 90 | 90 | 180 |
 | H3 | 80 | | 80 |
 | H4 | | 200 | 200 |
 | H5 | 40 | | 40 |
