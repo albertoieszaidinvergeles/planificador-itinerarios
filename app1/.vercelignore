@@ -1,0 +1,16 @@
+# Nada de esto se despliega a Vercel (un solo proyecto para la App 1).
+# Seguridad primero: el .env local NUNCA sube; las variables se ponen en el panel.
+backend/.env
+backend/.env.*
+!backend/.env.example
+.vercel/
+
+# Pruebas y cachés de Python
+backend/tests/
+backend/__pycache__/
+backend/.pytest_cache/
+*.pyc
+
+# Artefactos del frontend (se reconstruyen en cada despliegue)
+frontend/node_modules/
+frontend/dist/
