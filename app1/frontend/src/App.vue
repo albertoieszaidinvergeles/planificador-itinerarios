@@ -16,8 +16,12 @@ import { computed, reactive, ref, watch } from 'vue'
  * Configuración
  * ------------------------------------------------------------------ */
 
-// URL del backend: VITE_API_BASE_URL (pública) o la de desarrollo local.
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+// URL del backend. En Vercel (producción) se deja VITE_API_BASE_URL vacío para
+// llamar a /api/plan en el mismo origen: sin CORS y sin cambiar nada al volver
+// a desplegar. En local, si no se define, se usa el backend de desarrollo.
+const BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'http://127.0.0.1:8000' : '')
+).replace(/\/+$/, '')
 
 // Límites del contrato (idénticos a los de Pydantic en el backend).
 const LIMITES = { ciudad: 80, gustos: 200, personasMin: 1, personasMax: 20 }

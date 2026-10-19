@@ -197,6 +197,6 @@ Esperado: aparecen todas las cabeceras nuevas **y sigue apareciendo**
 - [ ] `413` con cuerpo de 4,8 MB y `200` con el cuerpo normal (punto 1)
 - [ ] `429` aparece en la tanda de 100 peticiones y llega la alerta de OpenRouter (punto 2)
 - [ ] `/docs`, `/redoc` y `/openapi.json` → `404` en producción; `/api/plan` sigue en pie (punto 3)
-- [ ] Cabeceras nuevas visibles **sin** perder el CORS del frontend (punto 4)
-- [ ] `curl -I` al frontend de Vercel devuelve las 10 cabeceras de `vercel.json` (S19)
+- [ ] Cabeceras nuevas visibles en la App 1 desplegada (estáticos y `/api/plan`)
+- [ ] `curl -I` a la URL de Vercel devuelve las 10 cabeceras de `app1/vercel.json` (S19)
 - [ ] Suite `pytest` en verde antes y después de cada cambio

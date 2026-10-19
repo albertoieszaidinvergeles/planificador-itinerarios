@@ -1,0 +1,5 @@
+# Dependencias del backend, en la raíz de la App 1.
+# Vercel instala este fichero desde la raíz del proyecto (app1/); el contenido
+# real vive en backend/requirements.txt, que es el que usan el entorno local
+# y los Dockerfiles de infra/.
+-r backend/requirements.txt

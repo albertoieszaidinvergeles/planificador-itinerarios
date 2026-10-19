@@ -7,40 +7,59 @@
 
 | App | Capa | URL | Fecha | Versión Git | Estado |
 |---|---|---|---|---|---|
-| App 1 | frontend Vercel | _(pendiente)_ | | | ⬜ H7 |
-| App 1 | backend Vercel | _(pendiente)_ | | | ⬜ H7 |
-| App 2 | frontend Vercel | _(pendiente)_ | | | ⬜ H10 |
-| App 2 | backend Vercel | _(pendiente)_ | | | ⬜ H10 |
+| App 1 | Vercel (frontend + API) | _(pendiente)_ | | | ⬜ H7 |
+| App 2 | Vercel (frontend + API) | _(pendiente)_ | | | ⬜ H10 |
 | App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | | | ⬜ H11 |
 
-## 2. Vercel — dos proyectos por aplicación
+## 2. Vercel — un proyecto por aplicación
+
+Un solo proyecto de Vercel por aplicación: sirve los estáticos de Vite **y** la API,
+así que front y back comparten origen y **no hace falta CORS** en despliegue.
 
 | Proyecto | Raíz | Publica | Variables |
 |---|---|---|---|
-| `app1-frontend` | `app1/frontend` | estáticos de Vite (`dist/`) | `VITE_API_BASE_URL` (pública) |
-| `app1-backend` | `app1/backend` | FastAPI (runtime Python, `main.py` exporta `app`) | `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` + origen CORS del frontend |
-| `app2-frontend` | `app2/frontend` | estáticos de Vite | `VITE_API_BASE_URL`, `VITE_CLERK_PUBLISHABLE_KEY` |
-| `app2-backend` | `app2/backend` | FastAPI | claves de IA + `CLERK_SECRET_KEY` (si la integración la requiere) + CORS con `Authorization` |
+| `app1` | `app1/` | estáticos de Vite (`frontend/dist/`) + la API como función Python: `api/plan.py` reexporta el `app` de `backend/main.py` y atiende `/api/plan` (sin rewrite); `maxDuration: 60`; dependencias desde `app1/requirements.txt` | `VITE_API_BASE_URL` **vacía** (mismo origen) + `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` (**sin** `DOCS_ACTIVOS`: en Vercel `/docs` debe dar 404) |
+| `app2` | `app2/` | estáticos de Vite + FastAPI como función Python (mismo esquema) | `VITE_API_BASE_URL` vacía + claves de IA + `VITE_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
+
+El `vercel.json` con las **10 cabeceras de seguridad** (S20) vive en la raíz de la
+aplicación (`app1/vercel.json`) y se aplica igual a estáticos y a la API.
 
 ### 2.1 Procedimiento CLI (reproducible)
 
 ```bash
 npm install -g vercel && vercel --version
 vercel login
-vercel link                       # desde la raíz del proyecto correspondiente
+vercel link                       # desde la raíz de la aplicación (app1/, app2/, …)
 vercel env add AI_API_KEY         # introducir el valor de forma interactiva (nunca en el historial)
 vercel deploy
 vercel deploy --prod
 ```
 
 - Distinguir **Development / Preview / Production**; cambiar variables implica volver a desplegar.
-- Comprobar preflight y cabeceras CORS del backend contra el origen real del frontend.
+- Si en algún momento front y API acaban en dominios distintos, ahí sí hay que abrir CORS
+  (`CORS_ORIGINS` en el backend) y comprobar el preflight contra el origen real.
 
-### 2.2 Comprobación de cierre (ambas apps en Vercel)
+### 2.1b Despliegue de App 1 (un solo proyecto, un solo despliegue)
 
-- [ ] URL pública correcta en ambos proyectos.
+1. `cd app1 && vercel link` → crea el proyecto (raíz `app1/`) y `vercel --prod`. Anota la URL.
+2. Probar la API: `curl -X POST https://xxxx.vercel.app/api/plan -H "Content-Type: application/json" -d "{}"` → tiene que devolver `422`.
+3. Probar el flujo completo desde `https://xxxx.vercel.app` (mismo origen: sin CORS).
+4. Comprobar las cabeceras con `curl -I https://xxxx.vercel.app` y cerrar **S19**.
+5. Anotar URL, fecha y versión Git en la tabla de la sección 1.
+
+Notas:
+
+- `VITE_API_BASE_URL` se deja **vacía** en el panel: el front llama a `/api/plan` en su propio
+  origen. Así no hay CORS y no hace falta re-desplegar nada si cambia la URL.
+- El `.env` local **no se sube** (`.vercelignore`); las variables se ponen en el panel o con `vercel env add`.
+- `main.py`, `ia.py` y `formato.py` no se tocan para desplegar: `load_dotenv()` sin `.env` no hace nada y `--no-server-header` es flag de uvicorn, que en Vercel no se usa.
+
+### 2.2 Comprobación de cierre (App 1 en Vercel)
+
+- [ ] URL pública correcta.
 - [ ] Caso válido → `200` con JSON desde la URL desplegada.
 - [ ] Caso de error (422 o 502 simulado) visible en la misma pantalla.
+- [ ] `curl -I` devuelve las 10 cabeceras del `vercel.json` (S19) y `/docs` da `404`.
 - [ ] Ninguna clave en el frontend (buscar en `dist/` y en la pestaña Network).
 - [ ] Evidencia de CLI (`vercel ls` / salida del deploy), no solo captura del panel.
 
