@@ -344,29 +344,30 @@ pytest -v
 
 ### 5.6 Despliegue en Vercel [App 1]
 
-**Dos proyectos de Vercel** conectados al mismo repositorio (es una decisión de despliegue,
-no dos pantallas):
+**Un solo proyecto de Vercel por aplicación**, conectado al mismo repositorio: sirve los
+estáticos compilados de Vite **y** la API como función Python. Al compartir origen, el
+frontend llama a `/api/plan` en su propio dominio y **no hace falta CORS** en despliegue:
 
 | Proyecto Vercel | Raíz | Qué publica |
 |---|---|---|
-| `app1-frontend` | `app1/frontend` | Estáticos compilados de Vite (`dist/`) |
-| `app1-backend` | `app1/backend` | FastAPI como función serverless (runtime Python; `main.py` exporta `app`) |
+| `app1` | `app1/` | Estáticos de Vite (`frontend/dist/`) + la API: `api/plan.py` reexporta el `app` de `backend/main.py` y atiende `/api/plan`; dependencias desde `app1/requirements.txt` |
 
-1. **Backend**: variables `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` y orígenes permitidos (CORS).
-2. **Frontend**: variable pública `VITE_API_BASE_URL` con la URL HTTPS del backend. **Nunca** una clave.
-3. **CORS** en el backend con el origen real del frontend; comprobar preflight y encabezados.
+1. **Variables**: `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` en el backend; `VITE_API_BASE_URL` **vacía** en el frontend (mismo origen, sin CORS). **Nunca** una clave en el frontend.
+2. **Sin `DOCS_ACTIVOS`**: `/docs`, `/redoc` y `/openapi.json` quedan en `404`.
+3. Las **cabeceras de seguridad** (S20) van en `app1/vercel.json` y se aplican tanto a los estáticos como a la API.
 4. Distinguir **Development / Preview / Production** y re-desplegar al cambiar variables.
-5. Probar desde la URL desplegada un caso válido y uno de error; anotar URLs, fecha y versión Git.
+5. Probar desde la URL desplegada un caso válido y uno de error; anotar URL, fecha y versión Git.
 
 ```bash
 npm install -g vercel && vercel login
-vercel link                      # desde la raíz que corresponda
+cd app1 && vercel link           # raíz de la aplicación
 vercel env add AI_API_KEY        # interactivo, sin valores en el historial
 vercel deploy && vercel deploy --prod
 ```
 
-**Comprobación de cierre:** ambas capas en Vercel, URL pública correcta, JSON válido,
-ninguna clave en el frontend, error visible y evidencia de CLI (una captura del panel no basta).
+**Comprobación de cierre:** URL pública correcta, JSON válido, ninguna clave en el frontend,
+error visible, `curl -I` con las 10 cabeceras, `/docs` en `404` y evidencia de CLI
+(una captura del panel no basta).
 
 ---
 
