@@ -105,10 +105,8 @@ los rechazos de Clerk (401). Matriz y prueba real documentada en [`docs/pruebas.
 
 | Aplicación | Capa | URL | Estado |
 |---|---|---|---|
-| App 1 | frontend Vercel | _(pendiente)_ | ⬜ H7 |
-| App 1 | backend Vercel | _(pendiente)_ | ⬜ H7 |
-| App 2 | frontend Vercel | _(pendiente)_ | ⬜ H10 |
-| App 2 | backend Vercel | _(pendiente)_ | ⬜ H10 |
+| App 1 | Vercel | ACABADA | https://planificador-itinerarios-iota.vercel.app/|
+| App 2 | Vercel | _(pendiente)_ | ⬜ H10 |
 | App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | ⬜ H11 |
 
 Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) está en
