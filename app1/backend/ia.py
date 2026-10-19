@@ -56,6 +56,7 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
         "No escribas introducción ni despedida, y no uses las palabras "
         "mañana, tarde o noche seguidas de dos puntos en ningún otro sitio.\n"
         "Responde en español, en texto plano (sin HTML ni Markdown) "
+        "PASA LO QUE PASE NO INVENTES SITIOS O LUGARES"
         "y en menos de 250 palabras. No indiques el número de palabras."
     )
 
