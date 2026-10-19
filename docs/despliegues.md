@@ -7,9 +7,18 @@
 
 | App | Capa | URL | Fecha | Versión Git | Estado |
 |---|---|---|---|---|---|
-| App 1 | Vercel (frontend + API) | _(pendiente)_ | | | ⬜ H7 |
+| App 1 | Vercel (frontend + API) | <https://planificador-itinerarios-iota.vercel.app/> | 19/10/2026 | `984187f` | ✅ H7 **desplegado y verificado (S19)**: `/` → `200` con las 10 cabeceras, `/docs` → `404`, `POST /api/plan` válido → `200 {"resultado": …}` en 5,4 s |
 | App 2 | Vercel (frontend + API) | _(pendiente)_ | | | ⬜ H10 |
 | App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | | | ⬜ H11 |
+
+> **Nota (19/10/2026):** la URL del *deployment* concreto
+> (<https://planificador-itinerarios-6o6a7zvgf-ies-zaidin-vergeles2.vercel.app/>) responde
+> `302 Protected by Vercel Authentication` en todas las rutas porque Vercel protege por defecto
+> esas URL provisionales (el `6o6a7zvgf` es el ID del despliegue). **La pública es la de la
+> tabla:** <https://planificador-itinerarios-iota.vercel.app/> — ahí se ejecutó la **S19**
+> completa (`docs/pruebas.md`): 10/10 cabeceras en web **y** en la API, `/docs` → `404`,
+> origen malicioso → `400` sin `access-control-allow-origin`, `POST {}` → `422` y `POST`
+> válido → `200 {"resultado": …}` en 5,4 s, con `Server: Vercel`.
 
 ## 2. Vercel — un proyecto por aplicación
 
@@ -56,12 +65,12 @@ Notas:
 
 ### 2.2 Comprobación de cierre (App 1 en Vercel)
 
-- [ ] URL pública correcta.
-- [ ] Caso válido → `200` con JSON desde la URL desplegada.
-- [ ] Caso de error (422 o 502 simulado) visible en la misma pantalla.
-- [ ] `curl -I` devuelve las 10 cabeceras del `vercel.json` (S19) y `/docs` da `404`.
-- [ ] Ninguna clave en el frontend (buscar en `dist/` y en la pestaña Network).
-- [ ] Evidencia de CLI (`vercel ls` / salida del deploy), no solo captura del panel.
+- [x] URL pública correcta: <https://planificador-itinerarios-iota.vercel.app/> → `200` (19/10/2026).
+- [x] Caso válido → `200` con JSON desde la URL desplegada (`POST /api/plan`, 5,4 s, `{"resultado": "Mañana: Visita al Museo…"}`).
+- [ ] Caso de error (422 o 502 simulado) visible en la misma pantalla (verificado en local: I02–I03; falta la captura en producción).
+- [x] `curl -I` devuelve las 10 cabeceras del `vercel.json` (S19) y `/docs` da `404` — **también en `/api/plan` (10/10)**.
+- [x] Ninguna clave en el frontend: el JS servido (`/assets/index-Lwb4RWKW.js`) no contiene `sk-or-`, `AI_API_KEY`, `AI_MODEL` ni `Bearer`.
+- [ ] Evidencia de CLI (`vercel ls` / salida del deploy), no solo captura del panel → **falta la tuya**.
 
 ## 3. Clerk (solo App 2)
 
