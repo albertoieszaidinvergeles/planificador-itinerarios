@@ -1,5 +1,14 @@
-# Dependencias del backend, en la raíz de la App 1.
-# Vercel instala este fichero desde la raíz del proyecto (app1/); el contenido
-# real vive en backend/requirements.txt, que es el que usan el entorno local
-# y los Dockerfiles de infra/.
--r backend/requirements.txt
+# Dependencias del backend para Vercel, en la raiz de la App 1.
+#
+# Vercel instala este fichero desde la raiz del proyecto (app1/). Su parser de
+# requirements NO resuelve el include "-r backend/requirements.txt" (daba
+# [PYTHON_REQUIREMENTS_PARSE_ERROR] en la posicion 241), asi que aqui van las
+# mismas versiones escritas directamente.
+#
+# OJO: backend/requirements.txt es el fichero canonico (lo usan el entorno
+# local, los tests y los Dockerfiles de infra/). Si cambia una version hay que
+# actualizar LOS DOS ficheros.
+fastapi==0.143.0
+uvicorn==0.54.0
+httpx==0.28.1
+python-dotenv==1.2.4
