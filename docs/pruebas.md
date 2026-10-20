@@ -140,6 +140,32 @@ pytest -v
 | Cabeceras de seguridad | **Frontend: ✅ ya corregido** (`app1/frontend/vercel.json`, 10 cabeceras, commit `a7fafea`; **✅ verificado en producción con S19** el 19/10/2026). **Backend: ✅ corregido 16/10/2026** (middleware en `main.py` y `--no-server-header`, commit `4d30eae`, PR #10; ver S14) | Baja-media | Hecho en el frontend y en el backend |
 | Prompt injection en `gustos` | Baja | ✅ **Mitigado 17/10/2026** (commit `d4fe820`): saneado de los datos + comprobación del formato de la respuesta en `formato.py`; lo que no es plan → `502` y no se pinta. Sigue siendo un riesgo inherente al uso de IA (el modelo puede obedecer), pero sin impacto visible |
 
+## Pruebas de la IA en producción (20/10/2026)
+
+Tras los arreglos anti-alucinación de `ia.py` (reglas en mensaje `system`, `temperature 0.2`,
+enfoque y toque aleatorios por llamada y `seed`; commits `6420774`, `d4a6ca0` y `aa244cb`), se
+pidieron planes reales contra la URL pública
+<https://planificador-itinerarios-iota.vercel.app/api/plan>. Las 6 peticiones de la tanda fueron
+con 10 s de separación, **respetando el rate limit del WAF** (10/min): ninguna devolvió `429`.
+
+| # | Ciudad | Gustos | HTTP | Tiempo | Resultado |
+|---|---|---|---|---|---|
+| 1 | Granada | «discotecas» | `200` | 3,4 s | Albaicín, mirador y río Genil; discotecas descritas por tipo y zona, sin nombres |
+| 2 | Granada | «discotecas» (idéntica a la 1) | `200` | 3,5 s | **Plan distinto**: museo, sitio arqueológico y plaza con fuentes (antes salían casi idénticos) |
+| 3 | Córdoba, España | «museos» | `200` | 4,1 s | «un museo de arqueología en el casco antiguo», puente romano, barrio de San Lorenzo; **sin la Alhambra** (es de Granada) ni museos con nombre inventado |
+| 4 | Sevilla | «sushi» | `200` | 2,9 s | Catedral, Alcázar, Santa Cruz y María Luisa (sitios reales) + «un restaurante de sushi del casco histórico», sin nombre propio |
+| 5 | Cuenca | «poke bowls veganos y discotecas de techno» | `200` | 19,2 s | Río Júcar y Parque de San Julián (reales), cero locales inventados. Tiempo **al filo de `AI_TIMEOUT`** (20 s) |
+| 6 | Badajoz | «cocktail bars y clubes de salsa» | `200` | 4,7 s | Ribera del Guadiana, mercado tradicional y planes genéricos sin nombres |
+
+**Qué se comprobó en cada plan:** las 3 etiquetas del formato (pasa el `comprobar_plan` del S18),
+sitios descritos «tipo + zona» **sin nombres propios de locales**, y solo sitios **reales de la
+ciudad pedida** (sin mezclar monumentos de otra). En la tanda previa (commit `d4a6ca0`) dos
+peticiones idénticas a Granada salieron casi iguales: se añadieron los `TOQUES` aleatorios y el
+`seed` (commit `aa244cb`) y ya no se repiten.
+
+> Los cambios de `ia.py` solo llegan a la función serverless con un **nuevo despliegue**: si se
+> modifica el prompt, hay que hacer Push + Redeploy antes de volver a probar.
+
 ## Reglas
 
 1. Nunca probar frases exactas de un modelo real ni confundir «el endpoint responde» con validar errores.
