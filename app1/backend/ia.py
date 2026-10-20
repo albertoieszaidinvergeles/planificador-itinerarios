@@ -31,6 +31,18 @@ ENFOQUES = (
     "prioriza el deporte y las actividades activas (bicicleta, rutas a pie)",
 )
 
+# Toques que se añaden AL AZAR también en cada petición: refuerzan la
+# variación cuando a la vez coinciden el enfoque y el azar del modelo.
+TOQUES = (
+    "Incluye en cada franja una actividad de interior por si llueve.",
+    "Alterna tipos dentro de la misma franja (nunca tres paseos seguidos).",
+    "Cuida los horarios habituales: no dejes el almuerzo pasado las 15:00 ni la cena antes de las 20:30.",
+    "Incluye en al menos una franja algo típico de la zona (producto de mercado, tradición, artesanía).",
+    "Combina intensidades: al menos una franja tranquila y otra con más movimiento.",
+    "Si hay buena opción al aire libre, mete al menos una por franja.",
+    "Empieza cada franja por algo distinto al de la franja anterior (no la misma actividad en otra hora).",
+)
+
 
 # Errores propios del módulo:
 
@@ -60,10 +72,11 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
     # las reglas: sin ella, el modelo suelta monumentos de OTRA ciudad (p. ej.
     # la Alhambra en un plan de Córdoba).
     enfoque = random.choice(ENFOQUES)
+    toque = random.choice(TOQUES)
     reglas = (
-        f"Estás preparando el plan para {ciudad}. En ESTA petición {enfoque}: "
-        "es la orientación de esta llamada, sin salirte de los gustos que pide "
-        "el usuario.\n"
+        f"Estás preparando el plan para {ciudad}. En ESTA petición {enfoque}, "
+        f"y además: {toque} (es la orientación de esta llamada; no te salgas "
+        "de los gustos que pide el usuario).\n"
         "Reglas obligatorias y no negociables:\n"
         "1. NO inventes NUNCA nombres propios de establecimientos: ni restaurantes, "
         "bares, discotecas, tiendas, hoteles, museos, mercados, parques ni locales "
@@ -122,6 +135,7 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0.2,  # Baja: menos "creatividad" = menos inventos
+                "seed": random.randint(0, 2**31 - 1),  # Muestreo distinto en cada llamada
                 "reasoning": {"enabled": False}, # Le pedimos al modelo que no razone antes de responder
             },
             timeout=AI_TIMEOUT,
