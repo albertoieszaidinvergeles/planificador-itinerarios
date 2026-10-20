@@ -1,4 +1,5 @@
 import os
+import random
 from datetime import date
 import httpx
 
@@ -15,6 +16,20 @@ AI_TIMEOUT = float(os.getenv("AI_TIMEOUT", "20"))
 
 # Dirección del servicio de chat de OpenRouter
 URL_OPENROUTER = "https://openrouter.ai/api/v1/chat/completions"
+
+# Enfoques que se rotan AL AZAR en cada petición (sin memoria, sin caché ni
+# contador: el enunciado prohíbe esos estados). Dos planes pedidos al mismo
+# sitio salían casi idénticos porque el prompt era literalmente el mismo; con
+# un enfoque distinto por llamada, cada plan ataca franjas diferentes.
+ENFOQUES = (
+    "prioriza el patrimonio y la historia (monumentos, museos, casco histórico)",
+    "prioriza la gastronomía (mercados, tapas, productos locales)",
+    "prioriza la naturaleza y el aire libre de la ciudad (parques, riberas, miradores)",
+    "prioriza el relax y los paseos tranquilos (jardines, terrazas, baños de ciudad)",
+    "prioriza el ocio nocturno y la música en directo",
+    "prioriza las compras, la artesanía y la vida de barrio",
+    "prioriza el deporte y las actividades activas (bicicleta, rutas a pie)",
+)
 
 
 # Errores propios del módulo:
@@ -41,22 +56,36 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
 
     # Reglas contra las alucinaciones: van como mensaje de SYSTEM (pesan mucho
     # más que una instrucción metida en mitad del prompt) y con temperatura baja
-    # para que el modelo no "se invente" nombres de locales.
+    # para que el modelo no "se invente" nombres de locales. La ciudad entra en
+    # las reglas: sin ella, el modelo suelta monumentos de OTRA ciudad (p. ej.
+    # la Alhambra en un plan de Córdoba).
+    enfoque = random.choice(ENFOQUES)
     reglas = (
+        f"Estás preparando el plan para {ciudad}. En ESTA petición {enfoque}: "
+        "es la orientación de esta llamada, sin salirte de los gustos que pide "
+        "el usuario.\n"
         "Reglas obligatorias y no negociables:\n"
         "1. NO inventes NUNCA nombres propios de establecimientos: ni restaurantes, "
         "bares, discotecas, tiendas, hoteles, museos, mercados, parques ni locales "
         "de ningún tipo (ni siglas ni marcas). Si no existen o no los conoces con "
         "certeza, no los menciones.\n"
         "2. Describe cada sitio por su TIPO y su ZONA, nunca por su nombre: "
-        "«una taberna de tapas del casco antiguo», «una discoteca de la zona "
-        "centro», «un restaurante de sushi cerca del centro».\n"
+        "«un museo de arqueología en el casco antiguo», «una taberna de tapas "
+        "del casco antiguo», «una discoteca de la zona centro», «un restaurante "
+        "de sushi cerca del centro». NUNCA inventes nombres con forma de nombre "
+        "propio (p. ej. «museo de la Ciudad», «museo de la Alquería», «La "
+        "Terraza de…»): si no recuerdas el nombre real de un sitio, descríbelo "
+        "con el artículo y el tipo.\n"
         "3. No des datos que no puedas comprobar: precios, horarios exactos, "
         "direcciones, teléfonos ni distancias.\n"
         "4. Si no hay nada adecuado para un gusto en esa ciudad, cambia a una "
         "actividad general de la franja (paseo, mercado, mirador, paseo por el "
         "río…) en vez de rellenar con un local inventado.\n"
-        "5. Respeta EXACTAMENTE el formato de tres líneas que te pide el usuario, "
+        "5. TODO lo que menciones debe estar EN esa ciudad: no cites monumentos, "
+        "barrios, ríos ni sitios de otra ciudad (p. ej. la Alhambra es de Granada, "
+        "no de Córdoba). Si no estás seguro de que un sitio esté en esa ciudad, "
+        "no lo menciones y usa algo genérico de la franja.\n"
+        "6. Respeta EXACTAMENTE el formato de tres líneas que te pide el usuario, "
         "en español y en texto plano."
     )
 
