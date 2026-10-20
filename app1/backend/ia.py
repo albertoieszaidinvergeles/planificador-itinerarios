@@ -39,6 +39,27 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
     ciudad = formato.sanear_dato(ciudad)
     gustos = formato.sanear_dato(gustos)
 
+    # Reglas contra las alucinaciones: van como mensaje de SYSTEM (pesan mucho
+    # más que una instrucción metida en mitad del prompt) y con temperatura baja
+    # para que el modelo no "se invente" nombres de locales.
+    reglas = (
+        "Reglas obligatorias y no negociables:\n"
+        "1. NO inventes NUNCA nombres propios de establecimientos: ni restaurantes, "
+        "bares, discotecas, tiendas, hoteles, museos, mercados, parques ni locales "
+        "de ningún tipo (ni siglas ni marcas). Si no existen o no los conoces con "
+        "certeza, no los menciones.\n"
+        "2. Describe cada sitio por su TIPO y su ZONA, nunca por su nombre: "
+        "«una taberna de tapas del casco antiguo», «una discoteca de la zona "
+        "centro», «un restaurante de sushi cerca del centro».\n"
+        "3. No des datos que no puedas comprobar: precios, horarios exactos, "
+        "direcciones, teléfonos ni distancias.\n"
+        "4. Si no hay nada adecuado para un gusto en esa ciudad, cambia a una "
+        "actividad general de la franja (paseo, mercado, mirador, paseo por el "
+        "río…) en vez de rellenar con un local inventado.\n"
+        "5. Respeta EXACTAMENTE el formato de tres líneas que te pide el usuario, "
+        "en español y en texto plano."
+    )
+
     # Construimos el prompt con los datos del formulario.
     #    {fecha} se convierte solo a texto con el formato AAAA-MM-DD.
     #    El frontend parte la respuesta por "Mañana:", "Tarde:" y "Noche:"
@@ -56,8 +77,8 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
         "No escribas introducción ni despedida, y no uses las palabras "
         "mañana, tarde o noche seguidas de dos puntos en ningún otro sitio.\n"
         "Responde en español, en texto plano (sin HTML ni Markdown) "
-        f"PASA LO QUE PASE NO INVENTES NOMBRES DE SITIOS. Todos los lugares recomendados deben ser 100% reales y verificables. Si no conoces un local específico para ese gusto, describe la actividad de forma genérica (ej. 'Cena en un restaurante de sushi local') en lugar de inventar un nombre propio."
-        "y en menos de 250 palabras. No indiques el número de palabras."
+        "y en menos de 250 palabras. No indiques el número de palabras. "
+        "Sin nombres propios de locales: descríbelos por tipo y zona."
     )
 
     try:
@@ -67,7 +88,11 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
             headers={"Authorization": f"Bearer {AI_API_KEY}"},
             json={
                 "model": AI_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": [
+                    {"role": "system", "content": reglas},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.2,  # Baja: menos "creatividad" = menos inventos
                 "reasoning": {"enabled": False}, # Le pedimos al modelo que no razone antes de responder
             },
             timeout=AI_TIMEOUT,
