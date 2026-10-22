@@ -241,7 +241,7 @@ def test_prompt_pide_las_etiquetas_del_frontend(monkeypatch):
         respuesta = cliente.post("/api/plan", json=entrada_valida())
     
         assert respuesta.status_code == 200
-        prompt = enviado["messages"][0]["content"]  # el texto que leería la IA
+        prompt = enviado["messages"][-1]["content"]  # el texto que leería la IA
         for etiqueta in ("Mañana:", "Tarde:", "Noche:"):
             assert etiqueta in prompt
 

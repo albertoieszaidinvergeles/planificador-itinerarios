@@ -30,6 +30,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 19/10/2026 | Alberto | H4 | App 1 | Vercel Web Analytics en el frontend: `@vercel/analytics` con `inject()` en `main.js` solo en producción. El componente `<Analytics />` de `@vercel/analytics/vue` se descartó porque importa `useRoute` de `vue-router` (prohibido en esta app) | | `65d965a` |
 | 19-20/10/2026 | Alberto | H5 | App 1 | **IA sin alucinaciones**: reglas en mensaje `system` (sin nombres propios de locales, describir «tipo + zona», sin datos no verificables, ciudad obligatoria, formato exacto), `temperature 0.2`, y variación por petición con `ENFOQUES` + `TOQUES` aleatorios y `seed` (dos peticiones idénticas ya no dan el mismo plan). Sin memoria ni estado | | `6420774`, `d4a6ca0`, `aa244cb` |
 | 20/10/2026 | Alberto | H5 | App 1 | Pruebas de la IA en producción (6 peticiones reales a `/api/plan`, todas `200`) y documentación en `pruebas.md` §«Pruebas de la IA en producción» | | rama `main` |
+| 22/10/2026 | Alberto y Manuel | H3 | App 2 | Añadido Spec Kit y reparados dos test tras el despliegue | | rama `main` |
 
 ## Tiempo total por hito
 
