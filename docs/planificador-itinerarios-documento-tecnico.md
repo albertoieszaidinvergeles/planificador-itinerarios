@@ -373,13 +373,15 @@ error visible, `curl -I` con las 10 cabeceras, `/docs` en `404` y evidencia de C
 
 ## 6. App 2 — GitHub Spec Kit y Clerk
 
-> **Proyecto nuevo desde cero** (carpeta `app2/` inicialmente vacía), *después de terminar
-> App 1*. Resuelve **la misma necesidad y el mismo contrato**, no una app más grande.
+> **Proyecto nuevo desde cero** (el código de aplicación de `app2/` sigue sin empezar;
+> Spec Kit ya está inicializado), *después de terminar App 1*. Resuelve **la misma
+> necesidad y el mismo contrato**, no una app más grande.
 > **No se copia la implementación de App 1** (conocimiento, necesidad y contrato sí se reutilizan).
 
 ### 6.1 Proceso con Spec Kit [App 2]
 
-1. Instalar/inicializar **GitHub Spec Kit oficial** con un agente compatible; anotar versión e integración.
+1. Instalar/inicializar **GitHub Spec Kit oficial** con la integración de GitHub Copilot;
+   App 2 está preparada con Spec Kit CLI 1.2.2 y Copilot skills.
 2. Principios y restricciones: SPA única, un formulario, cero persistencia, una API IA, tecnologías obligatorias, pruebas con mocks.
 3. Generar y **revisar** una especificación completa: problema, usuarios, RF/RNF, casos de uso, contrato, errores, aceptación y autenticación Clerk.
 4. Resolver ambigüedades y guardar **especificación y decisiones antes de generar código**.
@@ -388,9 +390,16 @@ error visible, `curl -I` con las 10 cabeceras, `/docs` en `404` y evidencia de C
 7. Comprobar equivalencia funcional con App 1 + criterios de Clerk; **rechazar** cualquier BD, pantalla o función extra que proponga el agente.
 8. Versionar artefactos de Spec Kit, prompts depurados, pruebas y revisión: **la especificación debe preceder al código en Git**.
 
-Comandos habituales (son órdenes para el agente, verificar los de la versión instalada):
-`/speckit.constitution`, `/speckit.specify`, `/speckit.clarify`, `/speckit.plan`,
-`/speckit.tasks`, `/speckit.analyze`, `/speckit.implement`.
+La integración instalada coloca los skills en `app2/.github/skills/`. Abre `app2/` como
+carpeta raíz del workspace de VS Code y usa Copilot Chat en modo Agente. En la integración
+actual, los pasos son skills del chat (no comandos de terminal) y se invocan con guiones:
+`/speckit-constitution`, `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`,
+`/speckit-tasks`, `/speckit-analyze` y `/speckit-implement`.
+
+La inicialización deja `app2/.specify/memory/constitution.md` como plantilla. El primer
+paso pendiente es ejecutar `/speckit-constitution` con los principios del proyecto; después
+generar y revisar la especificación. Los artefactos en `app2/specs/` deben estar revisados
+y versionados antes del primer commit de código.
 
 ```text
 app2/

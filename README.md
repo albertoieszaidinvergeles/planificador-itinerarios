@@ -62,7 +62,8 @@ están en `.gitignore` y fuera de las imágenes Docker.
 
 ## Instalación y ejecución
 
-**Prerrequisitos:** Python 3.10+, Node.js/npm, Git; Docker solo para la fase de App 2.
+**Prerrequisitos:** Python 3.10+, Node.js/npm, Git; `uv` para instalar Spec Kit y Docker
+solo para la fase final de App 2.
 
 ```bash
 # ── App 1: backend ──────────────────────────────────────────────
@@ -78,11 +79,15 @@ npm install
 cp .env.example .env                                # VITE_API_BASE_URL=http://127.0.0.1:8000
 npm run dev                                         # http://localhost:5173
 
-# ── App 2: especificación (ANTES de escribir código) ────────────
-# Instalar GitHub Spec Kit oficial con un agente compatible y anotar versión.
-# Generar: /speckit.constitution · /speckit.specify · /speckit.clarify
-#          /speckit.plan · /speckit.tasks · /speckit.analyze
-# Artefactos en app2/specs/ — su commit debe ser ANTERIOR al primer código.
+# ── App 2: Spec Kit (ya inicializado con Copilot, versión 1.2.2) ─
+# Instalación reproducible del CLI y comando usado para inicializarlo:
+uv tool install specify-cli==1.2.2
+specify init app2 --integration copilot --force --non-interactive
+# No vuelvas a ejecutar init sobre el proyecto ya preparado.
+# Abre app2 como carpeta raíz de VS Code y usa Copilot Chat en modo Agente:
+# /speckit-constitution · /speckit-specify · /speckit-clarify
+# /speckit-plan · /speckit-tasks · /speckit-analyze · /speckit-implement
+# Son comandos del chat, no de la terminal. Revisar y versionar specs antes del código.
 
 # ── App 2: contenedores (fase final) ────────────────────────────
 cd infra
