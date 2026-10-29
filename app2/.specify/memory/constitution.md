@@ -8,7 +8,7 @@ instrucción, no la constitución.
 
 ### I. El contrato no se toca (NO NEGOCIABLE)
 El endpoint es `POST /api/plan` con la misma entrada (`ciudad`, `fecha`, `personas`,
-`gustos`) y los mismos códigos y cuerpos de error que la App 1 (`422`, `501`, `502`,
+`gustos`) y los mismos códigos y cuerpos de error que la App 1 (`422`, `502`,
 `504`, `500` con `codigo` + `mensaje`). La App 2 solo **añade** el `401 NO_AUTENTICADO`.
 Ningún cambio de diseño puede romper este contrato: lo comprueban los tests.
 
