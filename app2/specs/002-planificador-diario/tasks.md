@@ -28,8 +28,8 @@
 
 **Objetivo**: arrancar la SPA con Clerk y mostrar el armazón de la pantalla en la misma vista.
 
-- [ ] T007 Crear en `app2/frontend/src/App.vue` el armazón de la pantalla única con `SignInButton` en modo modal y `UserButton` para la sesión activa; comprobación manual: verificar en el template que el acceso no navega a una página propia y que la sesión activa expone el control de usuario.
-- [ ] T008 Crear `app2/frontend/src/main.js` para montar Vue, cargar `src/style.css` e instalar `clerkPlugin` con `VITE_CLERK_PUBLISHABLE_KEY`; comprobación manual: iniciar `npm run dev` desde `app2/frontend`, confirmar que se muestra el armazón de la pantalla y probar el modal y el control de sesión con una clave publicable de desarrollo.
+- [x] T007 Crear en `app2/frontend/src/App.vue` el armazón de la pantalla única con `SignInButton` en modo modal y `UserButton` para la sesión activa; comprobación manual: verificar en el template que el acceso no navega a una página propia y que la sesión activa expone el control de usuario.
+- [x] T008 Crear `app2/frontend/src/main.js` para montar Vue, cargar `src/style.css` e instalar `clerkPlugin` con `VITE_CLERK_PUBLISHABLE_KEY`; comprobación manual: iniciar `npm run dev` desde `app2/frontend`, confirmar que se muestra el armazón de la pantalla y probar el modal y el control de sesión con una clave publicable de desarrollo.
 
 ## Fase 3: Historia de usuario 1 — completar y generar un plan (Prioridad: P1, MVP)
 
