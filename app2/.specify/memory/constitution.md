@@ -34,6 +34,9 @@ commit de backend y se anota el resultado en `docs/pruebas.md`.
 ### V. Entorno limpio: nada instala fuera de su sitio
 - Python: **siempre en el entorno virtual del proyecto** (`app2/backend/.venv`).
   Prohibido `pip install` global o `--user`.
+- Dependencias de **ejecución** → `app2/backend/requirements.txt`; las de **prueba**
+  (`pytest`) → `app2/backend/requirements-dev.txt`, para que la producción (Vercel) no
+  instale paquetes de test. Misma separación que en la App 1.
 - Node: dependencias solo en `app2/frontend/node_modules` (`npm i` con esa carpeta
   como raíz). Prohibido instalar paquetes globales.
 - No se añaden herramientas, servicios ni extensiones que el enunciado no pida.

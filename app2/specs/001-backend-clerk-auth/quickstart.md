@@ -6,7 +6,7 @@ Guía de implementación y validación local; no instala ni modifica dependencia
 
 - Windows y Python disponible en la versión admitida por el runtime.
 - Entorno virtual ya existente en `app2/backend/.venv`.
-- Dependencias instaladas por el propietario del entorno desde `app2/backend/requirements.txt`.
+- Dependencias instaladas por el propietario del entorno desde `app2/backend/requirements.txt` (ejecución) y `app2/backend/requirements-dev.txt` (pytest).
 - `.env` local del backend copiado desde `.env.example` y configurado sin subirlo a Git. Usar placeholders en documentación y nunca compartir valores reales.
 
 ## Configuración local

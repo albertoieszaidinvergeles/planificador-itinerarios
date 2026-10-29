@@ -26,9 +26,9 @@
 
 ### Dependencias Python
 
-- **Decision**: Mantener las dependencias de ejecución y pytest en el único archivo permitido, `app2/backend/requirements.txt`. Usar las librerías ya aprobadas por la constitución: FastAPI, Pydantic vía FastAPI, httpx, python-dotenv y `PyJWT[crypto]`; incluir pytest para las pruebas locales.
-- **Rationale**: Sigue el stack definido en la constitución y la restricción expresa del usuario de no añadir dependencias Python en otra ubicación.
-- **Alternatives considered**: Crear `requirements-dev.txt` (descartado por la restricción); instalar paquetes durante este flujo (prohibido y no necesario para planificar).
+- **Decision**: Dependencias de ejecución en `app2/backend/requirements.txt` (FastAPI, Pydantic vía FastAPI, httpx, python-dotenv y `PyJWT[crypto]`) y `pytest` **solo** en `app2/backend/requirements-dev.txt`, replicando la separación de la App 1 para que la producción no instale paquetes de prueba.
+- **Rationale**: Sigue el stack definido en la constitución (V, actualizado), la restricción de instalar únicamente en el `.venv` del backend y la práctica ya documentada de la App 1 (`pruebas.md`).
+- **Alternatives considered**: Meter `pytest` en `requirements.txt` (rechazado: Vercel instalaría dependencias de test en producción, algo que la App 1 evita deliberadamente); crear otros ficheros de dependencias o instalar paquetes durante este flujo (prohibido y no necesario para planificar).
 
 ### Generación segura y formato
 

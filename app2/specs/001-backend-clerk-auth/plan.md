@@ -6,7 +6,7 @@
 
 ## Summary
 
-Implementar el backend FastAPI dentro de `app2/backend`, manteniendo el endpoint y los límites del contrato de App 1, verificando los session tokens Clerk mediante firma RS256 y JWKS antes de procesar el cuerpo, y normalizando los errores al formato de la spec. Reutilizar el patrón de generación, saneado, formato del plan, CORS y cabeceras de seguridad de App 1 sin modificar `app1/` ni `app2/frontend/`. La configuración de dependencias Python se limita a `app2/backend/requirements.txt`.
+Implementar el backend FastAPI dentro de `app2/backend`, manteniendo el endpoint y los límites del contrato de App 1, verificando los session tokens Clerk mediante firma RS256 y JWKS antes de procesar el cuerpo, y normalizando los errores al formato de la spec. Reutilizar el patrón de generación, saneado, formato del plan, CORS y cabeceras de seguridad de App 1 sin modificar `app1/` ni `app2/frontend/`. La configuración de dependencias Python se limita a `app2/backend/requirements.txt` (ejecución) y `app2/backend/requirements-dev.txt` (solo pytest), como en la App 1.
 
 ## Technical Context
 
@@ -43,7 +43,7 @@ Implementar el backend FastAPI dentro de `app2/backend`, manteniendo el endpoint
 | II. Cero secretos | PASS | Leer secretos solo de entorno/`.env` ignorado; ejemplos contienen nombres y placeholders; no se copia configuración secreta al cliente ni a documentos. |
 | III. Clerk como identidad única | PASS | Verificar criptográficamente el token de sesión, sin tablas ni usuarios propios; el rechazo ocurre antes de entrada e IA. |
 | IV. Pruebas offline y TDD | PASS | Escribir tests antes de la implementación; dobles locales para JWKS, claves y proveedor IA; impedir conexiones externas en pytest. |
-| V. Entorno limpio | PASS | Registrar dependencias únicamente en `app2/backend/requirements.txt`; no ejecutar pip ni instalar fuera del `.venv` del backend. |
+| V. Entorno limpio | PASS | Dependencias de ejecución en `requirements.txt` y `pytest` en `requirements-dev.txt`; no ejecutar pip ni instalar fuera del `.venv` del backend. |
 | VI. Estado y límites | PASS | No añadir persistencia, cachés de aplicación, contadores ni rate limiting; estos límites pertenecen al borde/plataforma. |
 | Alcance solicitado | PASS | No editar `app2/frontend/` ni `app1/`; los archivos de código y pruebas nuevos quedan dentro de `app2/backend/`. |
 
@@ -71,7 +71,8 @@ app2/backend/
 ├── auth.py                 # Clerk Bearer/JWKS token verification
 ├── ia.py                   # OpenRouter request, prompt protections and IA error types
 ├── formato.py              # Input sanitization and output format validation
-├── requirements.txt        # All Python dependencies for this backend and pytest
+├── requirements.txt        # Runtime dependencies (FastAPI, httpx, python-dotenv, PyJWT[crypto])
+├── requirements-dev.txt    # Test dependencies only (pytest), kept out of production
 └── tests/
     ├── conftest.py         # Offline network guard and shared fixtures
     ├── test_auth.py        # Missing, invalid, expired, wrong issuer/audience/signature and valid tokens
@@ -99,7 +100,7 @@ See [research.md](research.md). Decisions are based on the feature spec, the App
 | Authentication verifies signature, issuer, expiration, and optional audience before body validation/AI | PASS |
 | No user storage, secret exposure, frontend or App 1 edits | PASS |
 | Tests can run fully offline with mocked Clerk/JWKS and IA | PASS |
-| Python dependency changes are limited to `app2/backend/requirements.txt`; no installation performed | PASS |
+| Python dependency changes are limited to `requirements.txt` (runtime) and `requirements-dev.txt` (pytest); no installation performed | PASS |
 | Local docs only; production docs disabled; CORS and security headers specified | PASS |
 
 No constitution violations remain.
