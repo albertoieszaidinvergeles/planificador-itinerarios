@@ -38,6 +38,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 29/10/2026 | Manuel | H8 | App 2 | Plan técnico del frontend con Spec Kit (`002-planificador-diario`): plan, research, modelo de datos, contrato de integración, quickstart con casos manuales y `tasks.md` (24 tareas, sin tests automáticos). Revisión con `/speckit-analyze` y correcciones: 422 y 401 vuelven a entrada (sin «Reintentar»), resultado anterior borrado al reenviar, modal de Clerk sin sesión y tarea T024 de revisión final (sin almacenamiento en navegador y código comentado) | 70 | rama `main` |
 | 29/10/2026 | Manuel | H9 | App 2 | Frontend, Fase 1 con `/speckit-implement` (T001–T006): `package.json` con solo los 6 paquetes del plan (`vue`, `@clerk/vue`, `vite`, `@vitejs/plugin-vue`, `tailwindcss`, `@tailwindcss/vite`), `package-lock.json` (`npm audit`: 0 vulnerabilidades), `vite.config.js`, `index.html`, `src/style.css` (foco visible, 320 px) y `.env.example` con los comentarios de seguridad recuperados y `VITE_API_BASE_URL` vacía en producción | 30 | rama `main` |
 | 29/10/2026 | Manuel | H9 | App 2 | Frontend, Fase 2 con `/speckit-implement` (T007–T008): `src/main.js` (Vue + `clerkPlugin` con la publishable key y error claro si falta) y `src/App.vue` (pantalla única con `SignInButton` en modo modal y `UserButton`). Probado en local: modal de Clerk sin cambiar de página, acceso con Google, avatar y cierre de sesión. `npm run build` correcto y sin secretos en `dist/` | 50 | rama `main` |
+| 29/10/2026 | Manuel | H9 | App 2 | Frontend T009–T012 con `/speckit-implement`: campos ciudad/fecha/personas/gustos con etiquetas, validación propia al enviar (`novalidate`, recorte de espacios, entero 1–20, «hoy» local recalculado al enviar, `aria-invalid`/`aria-describedby`) con mensajes en lenguaje de usuario, selector de compañía (Amigos/Familia/Pareja según personas, se borra si deja de valer) y sufijo en `gustos` validado sobre el texto final (máx. 200) sin campo `compania` en los datos. Probado en navegador y 32 casos de lógica comprobados | 60 | rama `main` |
 
 ## Tiempo total por hito
 
@@ -51,4 +52,4 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H5 | 40 | 20 | 60 |
 | H6 | | 130 | 130 |
 | H8 | 120 | 30 | 150 |
-| H9 | 80 | 120 | 200 |
+| H9 | 140 | 120 | 260 |
