@@ -12,8 +12,8 @@
 
 **Purpose**: Preparar únicamente el entorno Python y las dependencias declaradas del backend.
 
-- [ ] T001 [BACKEND] Crear `app2/backend/.venv` con `python -m venv .venv` si aún no existe; no instalar paquetes en este paso.
-- [ ] T002 [BACKEND] Crear `app2/backend/requirements.txt` con las dependencias de ejecución (FastAPI, httpx, python-dotenv y `PyJWT[crypto]`) y `app2/backend/requirements-dev.txt` únicamente con `pytest`, igual que en la App 1 para que la producción no instale paquetes de test; no ejecutar pip.
+- [x] T001 [BACKEND] Crear `app2/backend/.venv` con `python -m venv .venv` si aún no existe; no instalar paquetes en este paso.
+- [x] T002 [BACKEND] Crear `app2/backend/requirements.txt` con las dependencias de ejecución (FastAPI, httpx, python-dotenv y `PyJWT[crypto]`) y `app2/backend/requirements-dev.txt` únicamente con `pytest`, igual que en la App 1 para que la producción no instale paquetes de test; no ejecutar pip.
 
 **Gate**: El entorno local está preparado y el propietario puede instalar `requirements.txt` (ejecución) y `requirements-dev.txt` (pytest) dentro de `.venv` antes de ejecutar pytest.
 
