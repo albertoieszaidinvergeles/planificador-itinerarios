@@ -47,10 +47,18 @@ pytest -v
 
 | # | Caso | Comprobación | Resultado |
 |---|---|---|---|
-| T10 | Sin cabecera `Authorization` | `401 NO_AUTENTICADO` y **cero** llamadas al mock de IA | ⬜ |
-| T11 | Token firmado por otra clave / caducado | `401` (firma, emisor, caducidad y audiencia verificados; no basta decodificar) | ⬜ |
-| T12 | Token válido | La petición continúa: validación de entrada y `200` en escenario normal | ⬜ |
+| T10 | Sin cabecera `Authorization` | `401 NO_AUTENTICADO` incluso con cuerpo inválido y **cero** llamadas al mock de IA | ✅ `test_plan.py` |
+| T11 | Token inválido | Rechazo de firma ajena, `kid` desconocido, issuer incorrecto, `exp` vencido/ausente y audiencia incorrecta cuando está configurada | ✅ `test_auth.py` |
+| T12 | Token válido | Token RS256 firmado localmente y JWKS simulado; ruta autenticada devuelve `200` con `{"resultado": ...}` y llama una vez a la IA simulada | ✅ `test_auth.py`, `test_plan.py` |
 | T13 | Acceso real con Google + cierre de sesión | Prueba manual documentada (captura sin secretos) | ⬜ |
+| T14 | Compatibilidad del contrato y límites | 422 con cuerpo `detail` de FastAPI; límites de entrada, fechas, errores 502/504/500 y sin detalles internos | ✅ `test_plan.py` |
+| T15 | Configuración y formato | Cabeceras de seguridad, CORS/preflight con `Authorization`, docs detrás de `DOCS_ACTIVOS`, saneado de entrada y rechazo de salida IA inválida | ✅ `test_plan.py`, `test_formato.py` |
+
+### Ejecución de la suite — App 2
+
+| Fecha | Comando | Resultado | Notas |
+|---|---|---|---|
+| 29/10/2026 | Desde `app2\backend`: `.\.venv\Scripts\python.exe -m pytest -q` | ✅ `45 passed` en 1,25 s | Sin conexiones externas; JWKS y OpenRouter simulados. Una advertencia deprecada de Starlette sobre `httpx` con `TestClient`; no afecta al resultado. |
 
 ## Prueba real de integración (manual, datos ficticios)
 

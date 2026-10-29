@@ -31,6 +31,9 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 19-20/10/2026 | Alberto | H5 | App 1 | **IA sin alucinaciones**: reglas en mensaje `system` (sin nombres propios de locales, describir «tipo + zona», sin datos no verificables, ciudad obligatoria, formato exacto), `temperature 0.2`, y variación por petición con `ENFOQUES` + `TOQUES` aleatorios y `seed` (dos peticiones idénticas ya no dan el mismo plan). Sin memoria ni estado | | `6420774`, `d4a6ca0`, `aa244cb` |
 | 20/10/2026 | Alberto | H5 | App 1 | Pruebas de la IA en producción (6 peticiones reales a `/api/plan`, todas `200`) y documentación en `pruebas.md` §«Pruebas de la IA en producción» | | rama `main` |
 | 22/10/2026 | Alberto y Manuel | H3 | App 2 | Añadido Spec Kit y reparados dos test tras el despliegue | | rama `main` |
+| 29/10/2026 | Alberto | H8 | App 2 | Constitución de Spec Kit y especificación del backend con Clerk; plan, tareas, modelo de datos, quickstart y contrato API. Se fija que el `422` conserva el `detail` estándar de FastAPI de App 1 | 30 | `7258314`, `480d558`, `71c2c40`, `5e5fff0` |
+| 29/10/2026 | Alberto | H9 | App 2 | Entorno y dependencias del backend (runtime separado de pytest), verificación Bearer/JWKS RS256, `POST /api/plan`, errores 401/422/502/504/500, CORS, cabeceras, docs condicionales, saneado/formato IA y suite offline | 120 | `6e82dd5`, `912574c`, `9c6d034` |
+| 29/10/2026 | Alberto | H5 | Ambas | Actualizado `.env.example` para usar `nvidia/nemotron-3.5-lightning:free`; pruebas reales 5/5 documentadas. La variable `AI_MODEL` en Vercel continúa pendiente | 20 | `9c6d034` |
 
 ## Tiempo total por hito
 
@@ -41,5 +44,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H2 | 90 | | 180 |
 | H3 | 80 | 90 | 170 |
 | H4 | | 200 | 200 |
-| H5 | 40 | | 40 |
+| H5 | 40 | 20 | 60 |
 | H6 | | 130 | 130 |
+| H8 | | 30 | 30 |
+| H9 | | 120 | 120 |

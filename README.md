@@ -19,7 +19,7 @@ pantalla**.
 | Proceso | Construcción manual e incremental del equipo | Proyecto nuevo desde cero con **GitHub Spec Kit** + asistencia de IA |
 | Identidad | Sin Clerk | **Clerk** (acceso con Google, modal en la misma SPA, token verificado en backend) |
 | Despliegue | **Vercel** (frontend y backend) | **Vercel** (demo de Clerk) + **Docker en AWS EC2** (definitivo) |
-| Código | `app1/` | `app2/` (carpeta vacía al inicio; spec antes que código) |
+| Código | `app1/` | `app2/` (backend implementado según la spec; frontend pendiente) |
 
 ## Estructura del repositorio
 
@@ -38,7 +38,7 @@ planificador-itinerarios/
 ├── app1/
 │   ├── backend/          # main.py (app = FastAPI()), ia.py, requirements.txt, .env.example, tests/
 │   └── frontend/         # Vue 3 + Vite + Tailwind (SPA única)
-├── app2/                 # .specify/ · specs/ · backend/ · frontend/   (nuevo desde cero)
+├── app2/                 # .specify/ · specs/ · backend/ · frontend/ (backend listo; frontend pendiente)
 ├── infra/                # Dockerfile.backend · Dockerfile.frontend · compose.yaml · .env.example · proxy/
 └── presentacion/         # defensa.pptx
 ```
@@ -51,10 +51,12 @@ planificador-itinerarios/
 | Variable | Dónde | Entorno | Descripción |
 |---|---|---|---|
 | `AI_API_KEY` | backend | secreta | Clave de OpenRouter. **Solo backend** (Vercel/EC2). Nunca en el frontend ni en git |
-| `AI_MODEL` | backend | configuración | Modelo `:free` a usar (documentar el elegido) |
+| `AI_MODEL` | backend | configuración | Modelo actual `nvidia/nemotron-3.5-lightning:free`; Vercel aún requiere actualizarlo |
 | `AI_TIMEOUT` | backend | configuración | Segundos de espera al proveedor (20) |
 | `VITE_API_BASE_URL` | frontend | **pública** | URL HTTPS del backend desplegado |
-| `CLERK_SECRET_KEY` | backend App 2 | secreta | Clave secreta de Clerk (solo App 2) |
+| `CLERK_SECRET_KEY` | backend App 2 | secreta | Variable del ejemplo de configuración; la verificación actual usa el JWKS público |
+| `CLERK_ISSUER` | backend App 2 | configuración | Emisor Clerk obligatorio para comprobar firma y `iss` |
+| `CLERK_AUDIENCE` | backend App 2 | configuración | Audiencia opcional del token; si se configura, se valida |
 | `VITE_CLERK_PUBLISHABLE_KEY` | frontend App 2 | **pública** | Clave publishable de Clerk (pública por diseño) |
 
 Se distribuyen como `.env.example` con **nombres y valores ficticios**; los `.env` reales
@@ -98,13 +100,23 @@ docker compose down
 
 ## Pruebas
 
-```bash
-cd app1/backend && pytest -v        # la IA está simulada: no consume créditos ni internet
+```powershell
+# App 1 (desde la raíz del repositorio)
+cd app1\backend
+pytest -v
+```
+
+```powershell
+# App 2 (desde la raíz del repositorio; con el entorno ya preparado)
+Set-Location app2\backend
+.\.venv\Scripts\python.exe -m pytest -v
 ```
 
 La suite cubre: entrada válida (una sola llamada al mock), entrada inválida (422 sin llamar
 a la IA), límites de longitud, fallo del proveedor (502) y timeout (504); en App 2 se añaden
 los rechazos de Clerk (401). Matriz y prueba real documentada en [`docs/pruebas.md`](docs/pruebas.md).
+Última ejecución de App 2: **45 passed** el 29/10/2026. La integración manual con Clerk y
+la interfaz de App 2 siguen pendientes.
 
 ## URLs (despliegues)
 

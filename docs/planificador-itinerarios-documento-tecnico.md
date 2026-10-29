@@ -78,7 +78,7 @@ Fuente principal: `PR01-UD1 · Mini aplicación web con una API de IA` (el docen
 | Entrada (formulario único) | `ciudad`, `fecha`, `personas`, `gustos` (p. ej. «museos y tapas») |
 | Proceso | FastAPI valida → **una** llamada a OpenRouter → envuelve la respuesta |
 | Resultado único | Texto con el plan de un día, mostrado debajo del formulario |
-| API de IA | **OpenRouter**, modelo `:free` (p. ej. `nvidia/nemotron-3-ultra-550b-a55b:free`) — proveedor y modelo documentados |
+| API de IA | **OpenRouter**, modelo actual `nvidia/nemotron-3.5-lightning:free` (selección y pruebas en `docs/proceso.md` y `docs/pruebas.md`) |
 
 **Qué se ha retirado respecto a versiones anteriores del proyecto** (por la regla de
 simplicidad): consulta a OpenStreetMap/Overpass, `lugares.json`, validador de factibilidad,
@@ -373,8 +373,8 @@ error visible, `curl -I` con las 10 cabeceras, `/docs` en `404` y evidencia de C
 
 ## 6. App 2 — GitHub Spec Kit y Clerk
 
-> **Proyecto nuevo desde cero** (el código de aplicación de `app2/` sigue sin empezar;
-> Spec Kit ya está inicializado), *después de terminar App 1*. Resuelve **la misma
+> **Proyecto nuevo desde cero** con Spec Kit antes del código, *después de terminar App 1*.
+> El backend ya está implementado y probado; el frontend sigue pendiente. Resuelve **la misma
 > necesidad y el mismo contrato**, no una app más grande.
 > **No se copia la implementación de App 1** (conocimiento, necesidad y contrato sí se reutilizan).
 
@@ -396,10 +396,12 @@ actual, los pasos son skills del chat (no comandos de terminal) y se invocan con
 `/speckit-constitution`, `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`,
 `/speckit-tasks`, `/speckit-analyze` y `/speckit-implement`.
 
-La inicialización deja `app2/.specify/memory/constitution.md` como plantilla. El primer
-paso pendiente es ejecutar `/speckit-constitution` con los principios del proyecto; después
-generar y revisar la especificación. Los artefactos en `app2/specs/` deben estar revisados
-y versionados antes del primer commit de código.
+La constitución está definida en `app2/.specify/memory/constitution.md`. La especificación,
+el plan, las tareas y los contratos de `app2/specs/001-backend-clerk-auth/` preceden a la
+implementación. El backend de esa primera especificación ya está realizado: autenticación
+Clerk, endpoint compatible, configuración, saneado/formato IA y pruebas offline. El registro
+de `docs/pruebas.md` confirma **45 tests pasados el 29/10/2026**. Quedan pendientes el
+frontend, la integración manual real con Google/Clerk y los despliegues de App 2.
 
 ```text
 app2/
@@ -414,13 +416,14 @@ aceptada/rechazada y comprobación humana. Sin secretos ni conversaciones innece
 
 ### 6.2 Mismo alcance, mismas diferencias [App 2]
 
-Backend, contrato (sección 4), pantalla y pruebas son **equivalentes** a App 1, con tres añadidos:
+El backend de App 2 conserva el endpoint, los límites y la forma de respuesta satisfactoria
+de App 1; añade autenticación. La interfaz equivalente todavía está pendiente.
 
 | Añadido | Detalle |
 |---|---|
 | Cabecera | `Authorization: Bearer <session token>` en `POST /api/plan` |
 | Respuesta `401` | Token ausente/inválido/caducado → error controlado **sin llamar a la IA** |
-| Pruebas | Camino autenticado + rechazos con verificador simulado (más una prueba real documentada) |
+| Pruebas | Suite backend offline implementada y ejecutada: 45 pasaron; la prueba manual real de Clerk sigue pendiente |
 
 ### 6.3 Clerk en App 2
 
@@ -434,20 +437,10 @@ Backend, contrato (sección 4), pantalla y pruebas son **equivalentes** a App 1,
 6. Pruebas con pytest usando un **verificador simulado** + una prueba real controlada de acceso y cierre de sesión.
 7. Solo la clave **publishable** de Clerk puede estar en el frontend; la **secret** permanece en backend.
 
-```python
-# app2/backend/autenticacion.py (esquema)
-from fastapi import Depends, HTTPException
-
-def exigir_sesion(authorization: str | None):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, {"error": {"codigo": "NO_AUTENTICADO",
-                                            "mensaje": "Inicia sesión para continuar."}})
-    try:
-        return verificar_token_clerk(authorization[7:])   # firma, emisor, caducidad, audiencia
-    except Exception:
-        raise HTTPException(401, {"error": {"codigo": "NO_AUTENTICADO",
-                                            "mensaje": "Sesión no válida. Entra de nuevo."}})
-```
+La implementación está en `app2/backend/auth.py` y `app2/backend/main.py`: extrae el
+Bearer, obtiene la clave pública desde el JWKS derivado de `CLERK_ISSUER` y verifica la
+firma RS256, el emisor y la expiración; comprueba `CLERK_AUDIENCE` si está configurada.
+El middleware autentica `POST /api/plan` antes de que FastAPI valide el cuerpo.
 
 > Clerk **no es** el proveedor de IA y **no autoriza** a guardar datos: solo dice si la
 > petición está autenticada. Cookies/tokens del SDK = autenticación, nada más.
@@ -456,7 +449,7 @@ def exigir_sesion(authorization: str | None):
 
 Igual que en 5.6 (dos proyectos: `app2/frontend`, `app2/backend`) más:
 
-- Variables del backend: claves de IA + configuración de Clerk (`CLERK_SECRET_KEY` si aplica).
+- Variables del backend: `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT`, `CLERK_ISSUER` y, opcionalmente, `CLERK_AUDIENCE`. La verificación JWT implementada usa el JWKS público; no usa `CLERK_SECRET_KEY` para verificar la firma.
 - Frontend: `VITE_API_BASE_URL` + `VITE_CLERK_PUBLISHABLE_KEY` (pública por diseño).
 - CORS con `Authorization` contemplado.
 - **Demo en Vercel antes de pasar a EC2**: documentar URLs, configuración no secreta y evidencia

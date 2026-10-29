@@ -463,7 +463,7 @@ de la entrada ni del resultado en el servidor ni en el navegador (RN-02).
 |---|---|---|---|---|---|
 | PEN-01 | Integrantes, curso/grupo y datos del docente en la cabecera | Datos del documento | Equipo | Antes de entregar | Pendiente |
 | PEN-02 | Revisión de alcance de la idea con el docente («planificador de itinerarios» simplificado) | SUP-01, 1.3 | Docente / equipo | Primera sesión | Resuelta 14/10/2026: el docente acepta la idea |
-| PEN-03 | Modelo `:free` definitivo de OpenRouter y créditos disponibles | RF-03, DEP-01 | Equipo | Fase backend (H1) | Resuelta 13/10/2026: `nvidia/nemotron-3-super-120b-a12b:free` (ver `docs/proceso.md`) |
+| PEN-03 | Modelo `:free` definitivo de OpenRouter y créditos disponibles | RF-03, DEP-01 | Equipo | Fase backend (H1) | Resuelta inicialmente el 13/10/2026 con `nvidia/nemotron-3-super-120b-a12b:free`; reabierta al retirarse el modelo gratuito y resuelta el 29/10/2026 con `nvidia/nemotron-3.5-lightning:free` (ver `docs/proceso.md`). Falta actualizar `AI_MODEL` en Vercel. |
 | PEN-04 | Fecha de entrega, medio (Moodle) y duración de la demo | RES-13, DEP-04 | Docente | En clase | Pendiente |
 | PEN-05 | **[App 2]** Acceso a AWS, región y presupuesto; desactivación de recursos al finalizar | RES-11, SUP-04 | Docente / equipo | Antes de H11 | Pendiente |
 | PEN-06 | **[App 2]** Configuración final de Clerk (orígenes, Google como proveedor) y URLs de EC2 | RF-05, DEP-03 | Equipo | Antes de H10 | Pendiente |

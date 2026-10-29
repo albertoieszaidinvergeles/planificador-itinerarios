@@ -24,8 +24,8 @@
 | Dimensión | App 1 | App 2 | Evidencia |
 |---|---|---|---|
 | Legibilidad del código | ⬜ | ⬜ | Revisión de `app1/` vs `app2/` |
-| Validaciones (422) | ⬜ | ⬜ | `docs/pruebas.md` T02–T06 |
-| Contrato y errores (502/504/401) | ⬜ | ⬜ | Documento técnico §4 + T07–T12 |
+| Validaciones (422) | ⬜ | ✅ backend probado | `docs/pruebas.md` T02–T06 y T14 |
+| Contrato y errores (502/504/401) | ⬜ | ✅ backend probado | Documento técnico §4 + T07–T12, T14 |
 | Consistencia con la ERS | ⬜ | ⬜ | ERS §8 trazabilidad |
 
 ## 3. Errores (al menos un ejemplo real si hubo)
@@ -51,5 +51,5 @@
 
 ## 6. Conclusión (solo con evidencias)
 
-- ✅ Mismo escenario de aceptación ejecutado en ambas apps (entrada válida, 422, 502/504; App 2 añade 401).
-- ⬜ Pendiente: comparación de tiempos, calidad, errores y mantenibilidad con los datos de las tablas anteriores.
+- ✅ Suites backend automatizadas: App 1 registró 41 tests pasados el 17/10; App 2 registró 45 el 29/10, con mocks y sin red.
+- ⬜ Pendiente: prueba real de Clerk/Google, frontend y despliegue de App 2; comparación de tiempos, calidad, errores y mantenibilidad con los datos de las tablas anteriores.
