@@ -1,50 +1,76 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# App 2 — Planificador de itinerarios (Spec Kit + Clerk)
 
-## Core Principles
+Constitución del equipo para la App 2. Tiene prioridad sobre cualquier instrucción
+que pida una herramienta o un agente: si algo contradice aquí, se cambia la
+instrucción, no la constitución.
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## Principios fundamentales
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### I. El contrato no se toca (NO NEGOCIABLE)
+El endpoint es `POST /api/plan` con la misma entrada (`ciudad`, `fecha`, `personas`,
+`gustos`) y los mismos códigos y cuerpos de error que la App 1 (`422`, `501`, `502`,
+`504`, `500` con `codigo` + `mensaje`). La App 2 solo **añade** el `401 NO_AUTENTICADO`.
+Ningún cambio de diseño puede romper este contrato: lo comprueban los tests.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Cero secretos en el repositorio ni en la documentación
+Toda clave vive en `.env` (ignorado por Git) o en las variables de entorno de Vercel.
+`.env.example` solo con nombres y placeholders. Ni claves, ni tokens, ni capturas con
+secretos, ni valores reales en `docs/`. La secret de Clerk (`sk_…`) jamás aparece en el
+frontend, en el bundle compilado ni en el historial de Git.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### III. Identidad externa, sin usuarios propios
+La autenticación es **solo Clerk** (acceso con Google, componente modal en la única
+pantalla): nada de tablas de usuarios, contraseñas, roles ni páginas de login. El
+**backend verifica el session token** (firma contra JWKS + emisor + caducidad +
+audiencia) y responde `401 NO_AUTENTICADO` **antes** de consultar la IA. «Login bonito
+pero backend abierto» es un fallo de la rúbrica.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### IV. Pruebas primero y sin conexión
+TDD: se escribe el test antes que el código que lo cumple. La suite `pytest` pasa
+**sin internet y sin créditos**: la IA y Clerk se sustituyen por mocks. Nada que
+consulta servicios reales en CI ni en `pytest`. Se ejecuta `pytest` antes de cada
+commit de backend y se anota el resultado en `docs/pruebas.md`.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### V. Entorno limpio: nada instala fuera de su sitio
+- Python: **siempre en el entorno virtual del proyecto** (`app2/backend/.venv`).
+  Prohibido `pip install` global o `--user`.
+- Node: dependencias solo en `app2/frontend/node_modules` (`npm i` con esa carpeta
+  como raíz). Prohibido instalar paquetes globales.
+- No se añaden herramientas, servicios ni extensiones que el enunciado no pida.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### VI. Una sola pantalla, sin estado fuera de memoria
+Vue 3 + Vite **sin router, sin store, sin `localStorage` ni cachés/contadores en la
+aplicación** (lo prohíbe el enunciado). El resultado vive en memoria hasta el siguiente
+envío. El rate limit y los límites se aplican en el borde (Vercel), nunca en la app.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Stack tecnológico
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- **Backend:** FastAPI + Pydantic + `httpx` + `python-dotenv` + `pyjwt[crypto]`
+  (verificación JWKS de Clerk), mocks con `pytest`; errores traducidos a los códigos
+  del contrato.
+- **Frontend:** Vue 3 + Vite + Tailwind v4, formulario único, modal de Clerk
+  (publishable key con prefijo `VITE_`).
+- **Despliegue:** Vercel (un proyecto con raíz `app2/`: estáticos + función Python) y
+  AWS EC2 con Docker para el RNF-03.
+- **Identidad:** Clerk (instancia development hasta el despliegue; JWKS en
+  `https://<instancia>.clerk.accounts.dev/.well-known/jwks.json`).
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+## Flujo de trabajo
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+1. `/speckit.specify` → especificación de la funcionalidad (una sola: generar un plan).
+2. `/speckit.clarify` → solo si hay ambigüedades reales; se responde y se sigue.
+3. `/speckit.plan` → plan técnico; se revisa antes de continuar.
+4. `/speckit.tasks` → lista de tareas ordenadas (tests incluidos).
+5. `/speckit.implement` → código cumpliendo la constitución; `pytest` en verde.
+6. `/speckit.analyze` y `/speckit.checklist` → puertas de revisión antes de darlo por bueno.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Todo cambio de contexto (decisión, incidencia, verificación) se registra en
+`docs/proceso.md` y `docs/changelog.md`, y las pruebas en `docs/pruebas.md`.
+
+## Gobernanza
+
+- Esta constitución manda sobre cualquier instrucción de agente; su cambio requiere
+  acuerdo del equipo y queda registrado en `docs/proceso.md`.
+- El repositorio es la fuente de verdad: se trabaja en `main` con commits pequeños y
+  el empuje lo hace el dueño del repositorio desde GitHub Desktop.
+- Nada académico ni de plantilla en la interfaz de usuario: texto de usuario real.
