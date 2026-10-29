@@ -36,6 +36,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 29/10/2026 | Alberto | H5 | Ambas | Actualizado `.env.example` para usar `nvidia/nemotron-3.5-lightning:free`; pruebas reales 5/5 documentadas. La variable `AI_MODEL` en Vercel continúa pendiente | 20 | `9c6d034` |
 | 29/10/2026 | Manuel | H8 | App 2 | Especificación del frontend con Spec Kit (`002-planificador-diario`): specify + clarify (selector de compañía, estados entrada/espera/resultado/error, «Reintentar» sin reenvío, 422 sin campo conocido) y RF-004 aclarado (los espacios interiores cuentan, igual que en el backend) | 50 | rama `main` |
 | 29/10/2026 | Manuel | H8 | App 2 | Plan técnico del frontend con Spec Kit (`002-planificador-diario`): plan, research, modelo de datos, contrato de integración, quickstart con casos manuales y `tasks.md` (24 tareas, sin tests automáticos). Revisión con `/speckit-analyze` y correcciones: 422 y 401 vuelven a entrada (sin «Reintentar»), resultado anterior borrado al reenviar, modal de Clerk sin sesión y tarea T024 de revisión final (sin almacenamiento en navegador y código comentado) | 70 | rama `main` |
+| 29/10/2026 | Manuel | H9 | App 2 | Frontend, Fase 1 con `/speckit-implement` (T001–T006): `package.json` con solo los 6 paquetes del plan (`vue`, `@clerk/vue`, `vite`, `@vitejs/plugin-vue`, `tailwindcss`, `@tailwindcss/vite`), `package-lock.json` (`npm audit`: 0 vulnerabilidades), `vite.config.js`, `index.html`, `src/style.css` (foco visible, 320 px) y `.env.example` con los comentarios de seguridad recuperados y `VITE_API_BASE_URL` vacía en producción | 30 | rama `main` |
 
 ## Tiempo total por hito
 
@@ -49,4 +50,4 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H5 | 40 | 20 | 60 |
 | H6 | | 130 | 130 |
 | H8 | 120 | 30 | 150 |
-| H9 | | 120 | 120 |
+| H9 | 30 | 120 | 150 |

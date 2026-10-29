@@ -17,12 +17,12 @@
 
 **Objetivo**: preparar el proyecto de frontend vacío con las dependencias autorizadas y el esqueleto Vite/Tailwind.
 
-- [ ] T001 Definir en `app2/frontend/package.json` una SPA privada con scripts `dev`, `build` y `preview`, Vue 3 y Clerk como dependencias, y solo Vite, `@vitejs/plugin-vue`, Tailwind CSS v4 y `@tailwindcss/vite` como dependencias de desarrollo; comprobación manual: verificar que aparecen exactamente los seis paquetes permitidos y ningún router, store, axios o herramienta de pruebas.
-- [ ] T002 Ejecutar `npm install` desde `app2/frontend` usando exclusivamente las dependencias de `app2/frontend/package.json` y generar `app2/frontend/package-lock.json`; comprobación manual: revisar que el lockfile corresponde al manifiesto y que `npm install` no se ejecutó desde otra carpeta ni instaló paquetes globales.
-- [ ] T003 Ajustar `app2/frontend/.env.example` para documentar solo `VITE_CLERK_PUBLISHABLE_KEY` y `VITE_API_BASE_URL`, con un ejemplo de URL local y comentario que indique que la base queda vacía en producción; comprobación manual: confirmar que no aparecen claves secretas ni variables adicionales.
-- [ ] T004 Configurar `app2/frontend/vite.config.js` con los plugins oficiales de Vue y Tailwind CSS v4; comprobación manual: verificar que importa `@vitejs/plugin-vue` y `@tailwindcss/vite`, y no incorpora plugins de pruebas, proxies ni servicios adicionales.
-- [ ] T005 Crear `app2/frontend/src/style.css` con la importación CSS oficial de Tailwind v4 y estilos base de legibilidad; comprobación manual: confirmar que usa `@import "tailwindcss";` y no depende de otra hoja/framework externo.
-- [ ] T006 Crear `app2/frontend/index.html` con metadatos en español y el elemento de montaje Vue; comprobación manual: confirmar que contiene un único punto de montaje y no define rutas ni vistas.
+- [x] T001 Definir en `app2/frontend/package.json` una SPA privada con scripts `dev`, `build` y `preview`, Vue 3 y Clerk como dependencias, y solo Vite, `@vitejs/plugin-vue`, Tailwind CSS v4 y `@tailwindcss/vite` como dependencias de desarrollo; comprobación manual: verificar que aparecen exactamente los seis paquetes permitidos y ningún router, store, axios o herramienta de pruebas.
+- [x] T002 Ejecutar `npm install` desde `app2/frontend` usando exclusivamente las dependencias de `app2/frontend/package.json` y generar `app2/frontend/package-lock.json`; comprobación manual: revisar que el lockfile corresponde al manifiesto y que `npm install` no se ejecutó desde otra carpeta ni instaló paquetes globales.
+- [x] T003 Ajustar `app2/frontend/.env.example` para documentar solo `VITE_CLERK_PUBLISHABLE_KEY` y `VITE_API_BASE_URL`, con un ejemplo de URL local y comentario que indique que la base queda vacía en producción; comprobación manual: confirmar que no aparecen claves secretas ni variables adicionales.
+- [x] T004 Configurar `app2/frontend/vite.config.js` con los plugins oficiales de Vue y Tailwind CSS v4; comprobación manual: verificar que importa `@vitejs/plugin-vue` y `@tailwindcss/vite`, y no incorpora plugins de pruebas, proxies ni servicios adicionales.
+- [x] T005 Crear `app2/frontend/src/style.css` con la importación CSS oficial de Tailwind v4 y estilos base de legibilidad; comprobación manual: confirmar que usa `@import "tailwindcss";` y no depende de otra hoja/framework externo.
+- [x] T006 Crear `app2/frontend/index.html` con metadatos en español y el elemento de montaje Vue; comprobación manual: confirmar que contiene un único punto de montaje y no define rutas ni vistas.
 
 ## Fase 2: Fundacional — Clerk y pantalla inicial
 
