@@ -70,8 +70,8 @@
 
 **Prueba independiente**: seguir en [quickstart.md](./quickstart.md) los casos de teclado, lector de pantalla y 320 px; verificar en la misma sesión de revisión los estados y asociaciones de error.
 
-- [ ] T020 [US3] Completar en `app2/frontend/src/App.vue` la asociación accesible de cada etiqueta, control y error mediante identificadores y atributos ARIA, anuncios de espera/resultado/error, y foco visible y operable por teclado; comprobación manual: recorrer el formulario y los estados con teclado y lector de pantalla y comprobar cada mensaje asociado.
-- [ ] T021 [US3] Ajustar `app2/frontend/src/style.css` y las clases de `app2/frontend/src/App.vue` para que formulario, selector, errores, controles y tarjetas funcionen a 320 px sin desplazamiento horizontal; comprobación manual: probar una ventana de 320 px y confirmar que todos los controles siguen utilizables.
+- [x] T020 [US3] Completar en `app2/frontend/src/App.vue` la asociación accesible de cada etiqueta, control y error mediante identificadores y atributos ARIA, anuncios de espera/resultado/error, y foco visible y operable por teclado; comprobación manual: recorrer el formulario y los estados con teclado y lector de pantalla y comprobar cada mensaje asociado.
+- [x] T021 [US3] Ajustar `app2/frontend/src/style.css` y las clases de `app2/frontend/src/App.vue` para que formulario, selector, errores, controles y tarjetas funcionen a 320 px sin desplazamiento horizontal; comprobación manual: probar una ventana de 320 px y confirmar que todos los controles siguen utilizables.
 
 ## Fase 6: Pulido y verificación final
 

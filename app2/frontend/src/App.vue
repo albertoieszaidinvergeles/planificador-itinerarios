@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { SignInButton, UserButton, useAuth, useClerk } from '@clerk/vue'
 
 // Consulta a Clerk para mostrar el control adecuado cuando termina de cargar.
@@ -11,7 +11,23 @@ const estadoPantalla = ref('entrada')
 const respuestaPlan = ref(null)
 const mensajeError = ref('')
 const avisoGeneral = ref('')
+const tituloResultado = ref(null)
+// Botones que se sustituyen entre sí: guardarlos permite devolverles el foco.
+const botonGenerar = ref(null)
+const botonReintentar = ref(null)
 let solicitudEnCurso = false
+
+// Mueve el foco al elemento nuevo para que el teclado no pierda su posición.
+watch(estadoPantalla, async (estado) => {
+  if (estado === 'resultado') {
+    await nextTick()
+    tituloResultado.value?.focus()
+  } else if (estado === 'error') {
+    // El botón «Generar plan» desaparece: el foco pasa a «Reintentar».
+    await nextTick()
+    botonReintentar.value?.focus()
+  }
+})
 
 const mensajesValidacion = {
   ciudad: 'Escribe una ciudad (máximo 80 caracteres).',
@@ -178,6 +194,13 @@ async function enviarFormulario() {
 
   avisoGeneral.value = ''
   if (!validarFormulario()) {
+    const primerCampoConError = ['ciudad', 'fecha', 'personas', 'gustos'].find(
+      (campo) => errores[campo],
+    )
+    await nextTick()
+    if (primerCampoConError) {
+      document.getElementById(primerCampoConError)?.focus()
+    }
     return
   }
 
@@ -267,9 +290,12 @@ async function enviarFormulario() {
 }
 
 // Vuelve al formulario para que la persona decida si quiere enviar de nuevo.
-function reintentar() {
+async function reintentar() {
   mensajeError.value = ''
   estadoPantalla.value = 'entrada'
+  // «Reintentar» desaparece: el foco vuelve a «Generar plan».
+  await nextTick()
+  botonGenerar.value?.focus()
 }
 </script>
 
@@ -278,7 +304,7 @@ function reintentar() {
     <!-- La cabecera mantiene el acceso y la cuenta en la misma pantalla. -->
     <header class="border-b border-slate-200 bg-white">
       <div
-        class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6"
+        class="mx-auto flex max-w-5xl flex-col items-start justify-between gap-4 px-4 py-4 sm:flex-row sm:items-center sm:px-6"
       >
         <p class="text-lg font-bold tracking-tight text-slate-900">
           Planificador de turismo
@@ -345,10 +371,9 @@ function reintentar() {
               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
             />
             <p
-              v-if="errores.ciudad"
               id="error-ciudad"
-              class="text-sm text-red-700"
               aria-live="polite"
+              :class="errores.ciudad ? 'break-words text-sm text-red-700' : 'sr-only'"
             >
               {{ errores.ciudad }}
             </p>
@@ -370,10 +395,9 @@ function reintentar() {
               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
             />
             <p
-              v-if="errores.fecha"
               id="error-fecha"
-              class="text-sm text-red-700"
               aria-live="polite"
+              :class="errores.fecha ? 'break-words text-sm text-red-700' : 'sr-only'"
             >
               {{ errores.fecha }}
             </p>
@@ -397,10 +421,9 @@ function reintentar() {
               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
             />
             <p
-              v-if="errores.personas"
               id="error-personas"
-              class="text-sm text-red-700"
               aria-live="polite"
+              :class="errores.personas ? 'break-words text-sm text-red-700' : 'sr-only'"
             >
               {{ errores.personas }}
             </p>
@@ -420,7 +443,7 @@ function reintentar() {
                 type="radio"
                 name="compania"
                 value=""
-                class="size-4 accent-blue-700"
+                class="size-4 accent-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
               />
               Sin especificar
             </label>
@@ -430,7 +453,7 @@ function reintentar() {
                 type="radio"
                 name="compania"
                 value="amigos"
-                class="size-4 accent-blue-700"
+                class="size-4 accent-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
               />
               Amigos
             </label>
@@ -440,7 +463,7 @@ function reintentar() {
                 type="radio"
                 name="compania"
                 value="familia"
-                class="size-4 accent-blue-700"
+                class="size-4 accent-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
               />
               Familia
             </label>
@@ -453,7 +476,7 @@ function reintentar() {
                 type="radio"
                 name="compania"
                 value="pareja"
-                class="size-4 accent-blue-700"
+                class="size-4 accent-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
               />
               Pareja
             </label>
@@ -476,56 +499,60 @@ function reintentar() {
               class="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
             ></textarea>
             <p
-              v-if="errores.gustos"
               id="error-gustos"
-              class="text-sm text-red-700"
               aria-live="polite"
+              :class="errores.gustos ? 'break-words text-sm text-red-700' : 'sr-only'"
             >
               {{ errores.gustos }}
             </p>
           </div>
 
           <p
-            v-if="avisoGeneral"
             id="aviso-general"
-            class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+            aria-live="polite"
+            :class="avisoGeneral ? 'break-words rounded-lg bg-amber-50 p-3 text-sm text-amber-900' : 'sr-only'"
           >
             {{ avisoGeneral }}
           </p>
 
           <div
-            v-if="estadoPantalla === 'error'"
             role="alert"
-            class="rounded-lg bg-red-50 p-4 text-sm text-red-800"
+            :class="estadoPantalla === 'error' ? 'block break-words rounded-lg bg-red-50 p-4 text-sm text-red-800' : 'sr-only'"
           >
             {{ mensajeError }}
           </div>
 
+          <span role="status" aria-live="polite" class="sr-only">
+            {{ estadoPantalla === 'espera' ? 'Generando…' : '' }}
+          </span>
           <button
             v-if="estadoPantalla !== 'error'"
+            ref="botonGenerar"
             type="submit"
             :disabled="estadoPantalla === 'espera'"
+            aria-label="Generar plan"
             :aria-describedby="avisoGeneral ? 'aviso-general' : undefined"
-            class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
+            class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-blue-700"
           >
             <span
-              v-if="estadoPantalla === 'espera'"
-              role="status"
+              v-show="estadoPantalla === 'espera'"
+              aria-hidden="true"
               class="inline-flex items-center gap-2"
             >
               <span
                 aria-hidden="true"
                 class="size-4 animate-spin rounded-full border-2 border-current border-r-transparent"
               ></span>
-              Generando…
+              <span>Generando…</span>
             </span>
-            <span v-else>Generar plan</span>
+            <span v-show="estadoPantalla !== 'espera'">Generar plan</span>
           </button>
           <button
             v-else
+            ref="botonReintentar"
             type="button"
             :aria-describedby="avisoGeneral ? 'aviso-general' : undefined"
-            class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
+            class="w-full break-words rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
             @click="reintentar"
           >
             Reintentar
@@ -537,7 +564,12 @@ function reintentar() {
           class="mt-6 grid gap-4"
           aria-labelledby="resultado-titulo"
         >
-          <h3 id="resultado-titulo" class="text-lg font-semibold">
+          <h3
+            id="resultado-titulo"
+            ref="tituloResultado"
+            tabindex="-1"
+            class="break-words text-lg font-semibold"
+          >
             Tu plan del día
           </h3>
           <div
@@ -547,21 +579,21 @@ function reintentar() {
             <article
               v-for="tramo in resultadoPlan.tramos"
               :key="tramo.titulo"
-              class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200"
+              class="break-words rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200"
             >
-              <h4 class="font-semibold">{{ tramo.titulo }}</h4>
-              <p class="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+              <h4 class="break-words font-semibold">{{ tramo.titulo }}</h4>
+              <p class="mt-2 break-words whitespace-pre-line text-sm leading-6 text-slate-700">
                 {{ tramo.texto }}
               </p>
             </article>
           </div>
           <p
             v-else
-            class="whitespace-pre-line text-sm leading-6 text-slate-700"
+            class="break-words whitespace-pre-line text-sm leading-6 text-slate-700"
           >
             {{ resultadoPlan.texto }}
           </p>
-          <p class="text-sm text-slate-600">
+          <p class="break-words text-sm text-slate-600">
             Texto generado por IA, orientativo; comprueba sitios y horarios
           </p>
         </section>
