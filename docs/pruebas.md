@@ -50,7 +50,7 @@ pytest -v
 | T10 | Sin cabecera `Authorization` | `401 NO_AUTENTICADO` incluso con cuerpo inválido y **cero** llamadas al mock de IA | ✅ `test_plan.py` |
 | T11 | Token inválido | Rechazo de firma ajena, `kid` desconocido, issuer incorrecto, `exp` vencido/ausente y audiencia incorrecta cuando está configurada | ✅ `test_auth.py` |
 | T12 | Token válido | Token RS256 firmado localmente y JWKS simulado; ruta autenticada devuelve `200` con `{"resultado": ...}` y llama una vez a la IA simulada | ✅ `test_auth.py`, `test_plan.py` |
-| T13 | Acceso real con Google + cierre de sesión | Prueba manual documentada (captura sin secretos) | ⬜ |
+| T13 | Acceso real con Google + cierre de sesión | Prueba manual documentada (captura sin secretos) | 🟡 En local OK (29/10 y 02/11/2026, Manuel: modal de Clerk, Google, avatar, cerrar sesión y `POST` con token real → `200`; ver «Comprobación del frontend — App 2»). Falta la captura y repetirlo en producción (H10) |
 | T14 | Compatibilidad del contrato y límites | 422 con cuerpo `detail` de FastAPI; límites de entrada, fechas, errores 502/504/500 y sin detalles internos | ✅ `test_plan.py` |
 | T15 | Configuración y formato | Cabeceras de seguridad, CORS/preflight con `Authorization`, docs detrás de `DOCS_ACTIVOS`, saneado de entrada y rechazo de salida IA inválida | ✅ `test_plan.py`, `test_formato.py` |
 
@@ -59,6 +59,54 @@ pytest -v
 | Fecha | Comando | Resultado | Notas |
 |---|---|---|---|
 | 29/10/2026 | Desde `app2\backend`: `.\.venv\Scripts\python.exe -m pytest -q` | ✅ `45 passed` en 1,25 s | Sin conexiones externas; JWKS y OpenRouter simulados. Una advertencia deprecada de Starlette sobre `httpx` con `TestClient`; no afecta al resultado. |
+
+## Comprobación del frontend — App 2
+
+Frontend de `app2/frontend` (spec `app2/specs/002-planificador-diario/`). Sin herramientas de test añadidas
+(constitución V): la verificación combina **tres fuentes distintas**, que se indican en cada fila para no
+mezclarlas:
+
+- **Manual (Manuel):** prueba en el navegador (Chrome + DevTools), en local, con el backend de App 2 real
+  (`uvicorn`, `127.0.0.1:8000`), Clerk Development real (Google) y la IA real (OpenRouter).
+- **Lógica (Claude):** scripts de comprobación ejecutados por Claude **fuera del repositorio** (no forman parte
+  del proyecto ni se instalaron dependencias): extraen el `<script setup>` real de `App.vue` y lo ejecutan con el
+  Vue instalado en `app2/frontend`, simulando Clerk y `fetch`. Comprueban estados, mensajes y número de
+  peticiones; **no** comprueban lo que se ve en pantalla.
+- **Inspección (Claude):** `npm run build`, búsqueda de secretos en `dist/` y de código prohibido en `src/`.
+
+| # | Caso | Resultado esperado | Fuente | Resultado |
+|---|---|---|---|---|
+| F01 | Acceso con Clerk | Modal en la misma pantalla, solo Google; tras entrar, avatar; cerrar sesión desde el avatar | Manual | ✅ 29/10/2026 |
+| F02 | Validación de campos | Ciudad vacía/solo espacios, gustos vacíos, personas vacío/0/21/2,5 y fecha de ayer → mensaje junto al campo, foco al primer campo con error y **ninguna** petición; límites 1/80, 1/200, 1/20 y hoy/mañana aceptados; espacios interiores cuentan | Manual + Lógica (18 casos) | ✅ |
+| F03 | Compañía | Sin selector con 1 persona; Amigos/Familia con 2 o más; Pareja solo con 2; la elección se borra si deja de valer | Manual + Lógica (4 casos) | ✅ |
+| F04 | Longitud combinada | 183 + « (van con amigos)» = 200 aceptado; 184 → 201 rechazado junto a gustos; gustos vacíos + compañía rechazado; sufijos exactos; JSON con solo `ciudad`, `fecha`, `personas`, `gustos` | Lógica (10 casos) + Manual (mensaje junto a gustos) | ✅ |
+| F05 | Sin sesión / token caducado | Abre el modal de Clerk y **0** peticiones; no se bloquea | Manual (sin sesión) + Lógica (token `null`) | ✅ |
+| F06 | Petición autenticada | Una sola `POST /api/plan` con `Authorization: Bearer <token>` y los 4 campos; `200` con el plan. URL relativa `/api/plan` si `VITE_API_BASE_URL` está vacía | Manual (DevTools → Network) + Lógica | ✅ 02/11/2026 |
+| F07 | Espera y doble envío | Spinner y «Generando…», botón deshabilitado sin cambio de color al pasar el ratón; varios clics → **una** petición | Manual + Lógica (3 clics → 1) | ✅ |
+| F08 | Plan en tarjetas | Tres etiquetas en orden → tres tarjetas Mañana/Tarde/Noche y aviso de IA; sin etiquetas, desordenadas o repetidas → texto completo; un envío nuevo borra el resultado anterior; foco al título del plan | Manual + Lógica (5 casos) | ✅ |
+| F09 | Texto no confiable | Un `resultado` con `<script>` se pinta como texto (`{{ }}`, sin `v-html` en `src/`) | Lógica + Inspección | ✅ |
+| F10 | `200` sin `resultado` útil | `{}`, `""`, solo espacios o un número → estado de error «No se ha podido mostrar el plan…» | Lógica (4 casos) | ✅ |
+| F11 | `422` | Vuelve a «entrada»; errores junto a los campos conocidos; aviso general si hay un error sin campo o `detail` no válido; datos conservados | Lógica (4 casos) | ✅ |
+| F12 | `401` | Vuelve a «entrada» con aviso de sesión, sin «Reintentar» | Lógica | ✅ (ver nota CORS) |
+| F13 | `500` / `502` / `504` / otros | Estado de error con el `mensaje` del backend; sin mensaje u otro código (p. ej. `429`) → mensaje genérico | Lógica (5 casos) | ✅ |
+| F14 | Fallo de red | Backend parado → caja de error «No se ha podido conectar…» y «Reintentar»; respuesta no JSON igual; formulario conservado | Manual (backend parado) + Lógica | ✅ |
+| F15 | «Reintentar» | Vuelve a «entrada» con datos y compañía, **0** peticiones nuevas; foco a «Reintentar» al haber error y de vuelta a «Generar plan» | Manual (con teclado) + Lógica (5 casos) | ✅ |
+| F16 | Teclado y foco | Todos los campos, radios y botones alcanzables con Tab y con foco visible | Manual | ✅ 02/11/2026 |
+| F17 | Móvil 320 px | Sin desplazamiento horizontal; cabecera en dos líneas; tarjetas en una columna | Manual (DevTools, 320 px) | ✅ 02/11/2026 |
+| F18 | Nada guardado por la app | Session storage vacío. Local storage solo con claves **del SDK de Clerk** (`__clerk_environment`, `__clerk_protect_pid`, `__clerk_protect_st`, `clerk_telemetry_throttler`); ni formulario ni plan. Recargar → formulario vacío y sin plan. `src/` sin `localStorage`/`sessionStorage`/`indexedDB` | Manual (DevTools → Application) + Inspección | ✅ 02/11/2026 |
+| F19 | Build y secretos | `npm run build` sin avisos; en `dist/` 0 coincidencias de `sk_test_`, `sk_live_`, `sk-or-`, `AI_API_KEY`, `CLERK_SECRET` (solo la publishable key, pública); 6 dependencias; `npm audit` 0 vulnerabilidades | Inspección | ✅ 02/11/2026 |
+
+**Totales de los scripts de lógica (02/11/2026):** 78 casos, 0 fallos (formulario 32, envío 17, respuestas y
+errores 27, foco 2).
+
+**Notas:**
+
+- **CORS del 401 en local:** el backend devuelve el `401` (y el `500`) sin `access-control-allow-origin`, así que
+  en local (front en `localhost:5173`, back en `127.0.0.1:8000`) el navegador lo presenta como **fallo de red** y
+  la pantalla muestra el mensaje de conexión en vez del aviso de sesión. Comprobado con `curl` el 02/11/2026. En
+  Vercel no ocurre (mismo origen). Arreglo propuesto en el backend; F12 queda verificado solo por lógica.
+- **Tiempo de la IA:** en F06 el servidor tardó **28,65 s** en responder (DevTools → Timing) con `AI_TIMEOUT=20` y
+  devolvió `200`: el límite de 20 s del backend no es un tope total. Riesgo anotado para el backend.
 
 ## Prueba real de integración (manual, datos ficticios)
 

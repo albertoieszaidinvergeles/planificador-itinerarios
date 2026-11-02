@@ -29,6 +29,7 @@ watch(estadoPantalla, async (estado) => {
   }
 })
 
+// Mensajes de error de cada campo: los usa la validación del navegador y también el 422 del backend.
 const mensajesValidacion = {
   ciudad: 'Escribe una ciudad (máximo 80 caracteres).',
   fecha: 'Elige hoy o una fecha posterior.',
@@ -36,6 +37,8 @@ const mensajesValidacion = {
   gustos: 'Cuéntanos tus gustos (máximo 200 caracteres).',
 }
 
+// Prepara el plan para pintarlo: si trae «Mañana:», «Tarde:» y «Noche:» una vez y en orden, lo parte en
+// tres tarjetas; si no, devuelve el texto completo (tramos: null) para mostrarlo sin dividir.
 const resultadoPlan = computed(() => {
   const texto = respuestaPlan.value?.json?.resultado
   if (typeof texto !== 'string') {
