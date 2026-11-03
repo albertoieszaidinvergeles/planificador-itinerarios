@@ -1,0 +1,10 @@
+python_interpreter = "./backend/.venv/Scripts/python.exe"
+project_includes = ["backend", "api"]
+project_excludes = [
+  "backend/.venv",
+  "frontend/node_modules",
+  "frontend/dist",
+]
+# Añade backend/ al search path para que Pyrefly resuelva
+# los imports relativos de ia.py, auth.py, etc.
+search_path = ["./backend"]

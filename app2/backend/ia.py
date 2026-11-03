@@ -5,13 +5,15 @@ from datetime import date
 import httpx
 from dotenv import load_dotenv
 
-import formato
-from main import IAError, IATimeout
+import formato  # type: ignore[import-not-found]
+from main import IAError, IATimeout  # type: ignore[import-not-found]
 
 load_dotenv()
 
 AI_API_KEY = os.getenv("AI_API_KEY")
 AI_MODEL = os.getenv("AI_MODEL")
+# Fix 4: AI_TIMEOUT es ahora el límite TOTAL de la petición, no por operación.
+# Se pasa como timeout=httpx.Timeout(total=…) para cubrir connect+read+write.
 AI_TIMEOUT = float(os.getenv("AI_TIMEOUT", "20"))
 URL_OPENROUTER = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -57,6 +59,9 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
     )
 
     try:
+        # Fix 4: httpx.Timeout con límite total evita que una respuesta lenta
+        # pase el timeout por «ir llegando poco a poco» (el comportamiento
+        # anterior medía solo el tiempo entre trozos, no el total).
         respuesta = httpx.post(
             URL_OPENROUTER,
             headers={"Authorization": f"Bearer {AI_API_KEY}"},
@@ -68,7 +73,7 @@ def consultar_ia(ciudad: str, fecha: date, personas: int, gustos: str) -> str:
                 ],
                 "temperature": 0.2,
             },
-            timeout=AI_TIMEOUT,
+            timeout=httpx.Timeout(AI_TIMEOUT),
         )
         respuesta.raise_for_status()
         datos = respuesta.json()
