@@ -1,5 +1,5 @@
 # Planificador de itinerarios — PR01-UD1 
-
+ 
 **Necesidad:** una persona que visita una ciudad quiere ideas sencillas para organizar un
 día. Introduce ciudad, fecha, número de personas y gustos, y la mini aplicación web le
 devuelve un plan de un día usando **una API de inteligencia artificial**, en **una sola
