@@ -71,6 +71,15 @@ export default async function proxy(request) {
   headers.set('clerk-proxy-url', proxyUrl);
   headers.set('clerk-secret-key', secretKey);
 
+  // Clerk exige la IP real del visitante en X-Forwarded-For: sin ella, todas
+  // las peticiones parecen salir del datacenter de Vercel y las protecciones
+  // anti-fraude (Protect) bloquean los sign-ups con action_blocked.
+  const clientIp =
+    request.headers.get('cf-connecting-ip') ??
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim();
+  if (clientIp) headers.set('x-forwarded-for', clientIp);
+
   const method = request.method.toUpperCase();
   const body =
     method === 'GET' || method === 'HEAD'
