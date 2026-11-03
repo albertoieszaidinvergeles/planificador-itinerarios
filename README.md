@@ -13,7 +13,7 @@ pantalla**.
 > y sin pantallas adicionales. Ver [`docs/ERS.md`](docs/ERS.md).
  
 ## Las dos aplicaciones
-
+ 
 | | **App 1** | **App 2** |
 |---|---|---|
 | Proceso | Construcción manual e incremental del equipo | Proyecto nuevo desde cero con **GitHub Spec Kit** + asistencia de IA |
