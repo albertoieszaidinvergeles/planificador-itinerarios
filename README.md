@@ -11,7 +11,7 @@ pantalla**.
 > **Regla de alcance:** una sola pantalla, un solo formulario, una sola función útil y una
 > sola API de IA (OpenRouter). **Cero persistencia** (sin BD, sin `localStorage`), sin CRUD
 > y sin pantallas adicionales. Ver [`docs/ERS.md`](docs/ERS.md).
- 
+  
 ## Las dos aplicaciones 
  
 | | **App 1** | **App 2** |
