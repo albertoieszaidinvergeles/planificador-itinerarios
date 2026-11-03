@@ -374,8 +374,8 @@ error visible, `curl -I` con las 10 cabeceras, `/docs` en `404` y evidencia de C
 ## 6. App 2 — GitHub Spec Kit y Clerk
 
 > **Proyecto nuevo desde cero** con Spec Kit antes del código, *después de terminar App 1*.
-> El backend ya está implementado y probado; el frontend sigue pendiente. Resuelve **la misma
-> necesidad y el mismo contrato**, no una app más grande.
+> El backend y el frontend ya están implementados y probados; App 2 está desplegada en Vercel.
+> Resuelve **la misma necesidad y el mismo contrato**, no una app más grande.
 > **No se copia la implementación de App 1** (conocimiento, necesidad y contrato sí se reutilizan).
 
 ### 6.1 Proceso con Spec Kit [App 2]
@@ -398,10 +398,11 @@ actual, los pasos son skills del chat (no comandos de terminal) y se invocan con
 
 La constitución está definida en `app2/.specify/memory/constitution.md`. La especificación,
 el plan, las tareas y los contratos de `app2/specs/001-backend-clerk-auth/` preceden a la
-implementación. El backend de esa primera especificación ya está realizado: autenticación
-Clerk, endpoint compatible, configuración, saneado/formato IA y pruebas offline. El registro
-de `docs/pruebas.md` confirma **45 tests pasados el 29/10/2026**. Quedan pendientes el
-frontend, la integración manual real con Google/Clerk y los despliegues de App 2.
+implementación. El backend y el frontend están implementados: autenticación Clerk, endpoint
+compatible, configuración, saneado/formato IA y pruebas offline. El registro de
+`docs/pruebas.md` confirma **45 tests pasados el 29/10/2026** y la verificación manual del
+frontend. App 2 está desplegada en Vercel; sigue pendiente documentar con captura el flujo
+completo de Google/Clerk en producción y el despliegue de App 2 en EC2.
 
 ```text
 app2/
@@ -417,7 +418,7 @@ aceptada/rechazada y comprobación humana. Sin secretos ni conversaciones innece
 ### 6.2 Mismo alcance, mismas diferencias [App 2]
 
 El backend de App 2 conserva el endpoint, los límites y la forma de respuesta satisfactoria
-de App 1; añade autenticación. La interfaz equivalente todavía está pendiente.
+de App 1; añade autenticación. La interfaz equivalente ya está implementada.
 
 | Añadido | Detalle |
 |---|---|
@@ -447,13 +448,21 @@ El middleware autentica `POST /api/plan` antes de que FastAPI valide el cuerpo.
 
 ### 6.4 Despliegue de App 2 en Vercel [App 2]
 
-Igual que en 5.6 (dos proyectos: `app2/frontend`, `app2/backend`) más:
+App 2 se despliega como **un único proyecto Vercel con raíz `app2/`**. El build de Vite
+genera `frontend/dist`; la reescritura SPA no intercepta `/api/`, y `api/plan.py` exporta
+`main.app` como función ASGI Python para `POST /api/plan`. Vercel invoca esa función al
+recibir una petición: no hay un servidor uvicorn permanente.
 
-- Variables del backend: `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT`, `CLERK_ISSUER` y, opcionalmente, `CLERK_AUDIENCE`. La verificación JWT implementada usa el JWKS público; no usa `CLERK_SECRET_KEY` para verificar la firma.
-- Frontend: `VITE_API_BASE_URL` + `VITE_CLERK_PUBLISHABLE_KEY` (pública por diseño).
-- CORS con `Authorization` contemplado.
-- **Demo en Vercel antes de pasar a EC2**: documentar URLs, configuración no secreta y evidencia
-  de una petición rechazada (401) y otra aceptada (200).
+- Variables del backend: `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT`, `CLERK_ISSUER` y,
+  opcionalmente, `CLERK_AUDIENCE`. La verificación JWT usa el JWKS público;
+  `CLERK_SECRET_KEY` se reserva para el proxy de Clerk, no para verificar la firma.
+- Frontend: `VITE_API_BASE_URL` vacía (mismo origen) y `VITE_CLERK_PUBLISHABLE_KEY`
+  (pública por diseño).
+- El Routing Middleware `proxy.js`, limitado a `/__clerk/:path*`, reenvía las llamadas al
+  proxy de Clerk con `CLERK_SECRET_KEY` en el servidor.
+- Verificación de producción del 03/11/2026: web `200`, petición anónima a la API `401` y
+  petición real autenticada confirmada por Alberto. La URL y los límites de esta evidencia
+  están en `docs/despliegues.md` y `docs/pruebas.md`.
 
 ---
 
@@ -606,7 +615,8 @@ enunciado; el detalle vive en `README.md`):
 - [ ] ERS según plantilla + trazabilidad + «No aplica» motivados.
 - [ ] pytest con mocks (sin llamadas reales rutinarias) y prueba real documentada.
 - [ ] Historial incremental con hitos H0–H12 y contribuciones de todos.
-- [ ] App 1 y App 2 en Vercel (frontend + backend), variables y URLs verificadas + CLI.
+- [ ] App 1 en Vercel (frontend + backend), variables, URL y evidencia de CLI.
+- [x] App 2 en Vercel (frontend + backend): URL y rutas `200`/`401` verificadas; petición autenticada real confirmada por Alberto. Falta evidencia del CLI/SHA exacto del despliegue.
 - [ ] Spec Kit con spec/plan/tareas **anteriores** al código; `docs/uso-ia.md` completo.
 - [ ] Clerk: 401 probado sin token y acceso con Google funcionando en la única pantalla.
 - [ ] Docker local reproducible + App 2 en EC2 con HTTPS.
@@ -620,7 +630,7 @@ enunciado; el detalle vive en `README.md`):
 - Enunciado: `PR01-UD1 · Mini aplicación web con una API de IA` (el docente).
 - Plantilla ERS: `plantillaERS.md` del docente → versión del equipo
   (`ERS.md`).
-- FastAPI en Vercel: <https://vercel.com/docs/frameworks/backend/fastapi> · CLI: <https://vercel.com/docs/cli> · Variables de entorno: <https://vercel.com/docs/environment-variables>
+- FastAPI en Vercel: <https://vercel.com/docs/frameworks/backend/fastapi> · funciones Python ASGI en `/api`: <https://vercel.com/docs/functions/runtimes/python/api-directory> · Routing Middleware: <https://vercel.com/docs/routing-middleware> · reescrituras: <https://vercel.com/docs/project-configuration/vercel-json#rewrites> · CLI: <https://vercel.com/docs/cli> · variables de entorno: <https://vercel.com/docs/environment-variables>
 - GitHub Spec Kit: <https://github.com/github/spec-kit>
 - Clerk: tokens de sesión <https://clerk.com/docs/guides/sessions/session-tokens> · verificación manual de JWT <https://clerk.com/docs/guides/sessions/manual-jwt-verification>
 - OpenRouter (modelos `:free`): <https://openrouter.ai/models?max_price=0>

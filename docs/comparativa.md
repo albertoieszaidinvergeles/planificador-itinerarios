@@ -9,14 +9,14 @@
 
 | Fase | App 1 (manual) | App 2 (Spec Kit + Clerk) | Notas |
 |---|---|---|---|
-| Análisis y ERS | ⬜ pendiente | ⬜ pendiente | En App 2 parte de la ERS base + Anexo C |
-| Especificación/plan/tareas (Spec Kit) | — (no aplica) | ⬜ pendiente | Debe ser anterior al código |
-| Backend mínimo + contrato | ⬜ pendiente | ⬜ pendiente | |
-| Pruebas (pytest + mocks) | ⬜ pendiente | ⬜ pendiente | |
-| Frontend + integración | ⬜ pendiente | ⬜ pendiente | |
-| Diseño (Tailwind) y revisión | ⬜ pendiente | ⬜ pendiente | |
-| Autenticación Clerk | — (no aplica) | ⬜ pendiente | Contar **aparte** |
-| Despliegues (Vercel / Docker+EC2) | ⬜ pendiente (Vercel) | ⬜ pendiente (Vercel + EC2) | Contar **aparte** |
+| Análisis y ERS | ⬜ pendiente | ✅ base y Anexo C | La ERS común se amplía con los requisitos de Clerk |
+| Especificación/plan/tareas (Spec Kit) | — (no aplica) | ✅ terminado | Spec, plan y tareas de App 2 versionados antes del código |
+| Backend mínimo + contrato | ⬜ pendiente | ✅ terminado | Backend FastAPI con autenticación Clerk |
+| Pruebas (pytest + mocks) | ⬜ pendiente | ✅ 45 pasaron | App 2, 29/10/2026; suite offline |
+| Frontend + integración | ⬜ pendiente | ✅ terminado | App 2: F01–F19 en `docs/pruebas.md` |
+| Diseño (Tailwind) y revisión | ⬜ pendiente | ✅ terminado | Responsive y revisión hasta 320 px |
+| Autenticación Clerk | — (no aplica) | 🟡 producción probada parcialmente | Petición autenticada real confirmada; falta documentar captura y flujo completo de Google/cierre de sesión en producción |
+| Despliegues (Vercel / Docker+EC2) | ⬜ pendiente (Vercel) | 🟡 Vercel desplegado; EC2 pendiente (~6 h) | URL y respuestas verificadas en `docs/despliegues.md`; contar **aparte** |
 | Revisión y corrección de propuestas IA | ⬜ pendiente | ⬜ pendiente | |
 
 ## 2. Calidad
@@ -52,4 +52,6 @@
 ## 6. Conclusión (solo con evidencias)
 
 - ✅ Suites backend automatizadas: App 1 registró 41 tests pasados el 17/10; App 2 registró 45 el 29/10, con mocks y sin red.
-- ⬜ Pendiente: prueba real de Clerk/Google, frontend y despliegue de App 2; comparación de tiempos, calidad, errores y mantenibilidad con los datos de las tablas anteriores.
+- ✅ App 2 está desplegada en Vercel: la ruta web devuelve `200`, sin token la API devuelve `401` y Alberto confirma que una petición real autenticada funciona.
+- ⬜ Pendiente: documentar con captura el flujo completo de Clerk (Google y cierre de sesión) en producción, desplegar en EC2 y comparar tiempos, calidad, errores y mantenibilidad con el resto de datos.
+- ⏱️ Alberto estima unas 3 h para el trabajo de despliegue H10; el desglose está en `docs/changelog.md`.

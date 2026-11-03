@@ -8,7 +8,7 @@
 | App | Capa | URL | Fecha | Versión Git | Estado |
 |---|---|---|---|---|---|
 | App 1 | Vercel (frontend + API) | <https://planificador-itinerarios-iota.vercel.app/> | 19/10/2026 | `984187f` | ✅ H7 **desplegado y verificado (S19)**: `/` → `200` con las 10 cabeceras, `/docs` → `404`, `POST /api/plan` válido → `200 {"resultado": …}` en 5,4 s |
-| App 2 | Vercel (frontend + API) | _(pendiente)_ | | | ⬜ H10 |
+| App 2 | Vercel (frontend + API + proxy Clerk) | <https://planificador-itinerarios.vercel.app/> | 03/11/2026 | — | ✅ H10 desplegado; `/` → `200`, `POST /api/plan` sin sesión → `401`; Alberto confirma una petición real autenticada correcta |
 | App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | | | ⬜ H11 |
 
 > **Nota (19/10/2026):** la URL del *deployment* concreto
@@ -20,15 +20,29 @@
 > origen malicioso → `400` sin `access-control-allow-origin`, `POST {}` → `422` y `POST`
 > válido → `200 {"resultado": …}` en 5,4 s, con `Server: Vercel`.
 
+> **App 2 (03/11/2026):** la URL pública <https://planificador-itinerarios.vercel.app/>
+> devuelve `200`. Una petición a `/api/plan` sin sesión devuelve `401`, como exige Clerk;
+> Alberto confirma que una petición real con sesión válida sí funciona. No se guardan tokens
+> ni datos personales de la prueba. La revisión local de esta documentación no dispone de
+> la sesión Clerk para repetir esa petición autenticada.
+
 ## 2. Vercel — un proyecto por aplicación
 
 Un solo proyecto de Vercel por aplicación: sirve los estáticos de Vite **y** la API,
-así que front y back comparten origen y **no hace falta CORS** en despliegue.
+así que front y back comparten origen y **no hace falta CORS** en despliegue. La API no queda
+ejecutándose como un servidor permanente: Vercel invoca la función Python al llegar una
+petición HTTP y puede iniciarla de nuevo cuando sea necesario.
 
 | Proyecto | Raíz | Publica | Variables |
 |---|---|---|---|
 | `app1` | `app1/` | estáticos de Vite (`frontend/dist/`) + la API como función Python: `api/plan.py` reexporta el `app` de `backend/main.py` y atiende `/api/plan` (sin rewrite); `maxDuration: 60`; dependencias desde `app1/requirements.txt` | `VITE_API_BASE_URL` **vacía** (mismo origen) + `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT` (**sin** `DOCS_ACTIVOS`: en Vercel `/docs` debe dar 404) |
-| `app2` | `app2/` | estáticos de Vite + FastAPI como función Python (mismo esquema) | `VITE_API_BASE_URL` vacía + claves de IA + `VITE_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
+| `app2` | `app2/` | Build `cd frontend && npm install && npm run build`, estáticos en `frontend/dist`; `api/plan.py` exporta `main.app` como función ASGI Python para `/api/plan`; `proxy.js` es Routing Middleware solo para `/__clerk/:path*` | `VITE_API_BASE_URL` vacía, `VITE_CLERK_PUBLISHABLE_KEY` pública y variables servidor `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT`, `CLERK_ISSUER`, `CLERK_AUDIENCE` opcional y `CLERK_SECRET_KEY` para el proxy |
+
+En App 2, `vercel.json` dirige las rutas de la SPA a `index.html` **sin capturar `/api/`**,
+para que la petición llegue a `api/plan.py`. Vercel reconoce la exportación ASGI `app`;
+no se arranca `uvicorn` ni hace falta un proceso backend aparte. Las llamadas del SDK de
+Clerk pasan por `/__clerk`, donde el Routing Middleware reenvía las peticiones a Clerk y
+usa `CLERK_SECRET_KEY` solo en el servidor.
 
 El `vercel.json` con las **10 cabeceras de seguridad** (S20) vive en la raíz de la
 aplicación (`app1/vercel.json`) y se aplica igual a estáticos y a la API.
@@ -71,6 +85,16 @@ Notas:
 - [x] `curl -I` devuelve las 10 cabeceras del `vercel.json` (S19) y `/docs` da `404` — **también en `/api/plan` (10/10)**.
 - [x] Ninguna clave en el frontend: el JS servido (`/assets/index-Lwb4RWKW.js`) no contiene `sk-or-`, `AI_API_KEY`, `AI_MODEL` ni `Bearer`.
 - [ ] Evidencia de CLI (`vercel ls` / salida del deploy), no solo captura del panel → **falta la tuya**.
+
+### 2.3 App 2 en producción (H10)
+
+- URL pública: <https://planificador-itinerarios.vercel.app/>.
+- Verificación directa del 03/11/2026: `GET /` → `200`; `POST /api/plan` sin
+  `Authorization` → `401`.
+- Manuel confirmó que la petición real con sesión Clerk válida funciona. La prueba
+  autenticada requiere la sesión del usuario y no se reproduce con una petición anónima.
+- El despliegue no se marca como verificado mediante una petición autenticada independiente
+  ni se atribuye a un SHA concreto de Vercel; no se dispone de esa evidencia en esta revisión.
 
 ## 3. Clerk (solo App 2)
 

@@ -50,7 +50,7 @@ pytest -v
 | T10 | Sin cabecera `Authorization` | `401 NO_AUTENTICADO` incluso con cuerpo inválido y **cero** llamadas al mock de IA | ✅ `test_plan.py` |
 | T11 | Token inválido | Rechazo de firma ajena, `kid` desconocido, issuer incorrecto, `exp` vencido/ausente y audiencia incorrecta cuando está configurada | ✅ `test_auth.py` |
 | T12 | Token válido | Token RS256 firmado localmente y JWKS simulado; ruta autenticada devuelve `200` con `{"resultado": ...}` y llama una vez a la IA simulada | ✅ `test_auth.py`, `test_plan.py` |
-| T13 | Acceso real con Google + cierre de sesión | Prueba manual documentada (captura sin secretos) | 🟡 En local OK (29/10 y 02/11/2026, Manuel: modal de Clerk, Google, avatar, cerrar sesión y `POST` con token real → `200`; ver «Comprobación del frontend — App 2»). Falta la captura y repetirlo en producción (H10) |
+| T13 | Acceso real con Google + cierre de sesión | Prueba manual documentada (captura sin secretos) | 🟡 En local OK (29/10 y 02/11/2026, Manuel: modal de Clerk, Google, avatar, cerrar sesión y `POST` con token real → `200`). En producción, Alberto confirma el 03/11/2026 que una petición real autenticada funciona; falta la captura y repetir el flujo completo de Google/cierre de sesión en producción |
 | T14 | Compatibilidad del contrato y límites | 422 con cuerpo `detail` de FastAPI; límites de entrada, fechas, errores 502/504/500 y sin detalles internos | ✅ `test_plan.py` |
 | T15 | Configuración y formato | Cabeceras de seguridad, CORS/preflight con `Authorization`, docs detrás de `DOCS_ACTIVOS`, saneado de entrada y rechazo de salida IA inválida | ✅ `test_plan.py`, `test_formato.py` |
 
@@ -61,6 +61,20 @@ pytest -v
 | 29/10/2026 | Desde `app2\backend`: `.\.venv\Scripts\python.exe -m pytest -q` | ✅ `45 passed` en 1,25 s | Sin conexiones externas; JWKS y OpenRouter simulados. Una advertencia deprecada de Starlette sobre `httpx` con `TestClient`; no afecta al resultado. |
 
 ## Comprobación del frontend — App 2
+
+### Verificación de App 2 en Vercel (03/11/2026)
+
+URL pública: <https://planificador-itinerarios.vercel.app/>.
+
+| Comprobación | Resultado | Fuente |
+|---|---|---|
+| `GET /` | `200` | Petición HTTP directa |
+| `POST /api/plan` sin sesión/token | `401` | Petición HTTP directa; rechazo esperado por Clerk |
+| `POST /api/plan` con sesión Clerk válida | Funciona; petición real confirmada | Prueba manual realizada por Alberto; no se almacena el token ni el cuerpo de la petición |
+
+La respuesta anónima `401` no significa que el backend esté apagado: confirma que la ruta
+está atendida y que la autenticación rechaza la petición antes de procesarla. No se repitió
+la solicitud autenticada desde esta revisión porque requiere la sesión privada del usuario.
 
 Frontend de `app2/frontend` (spec `app2/specs/002-planificador-diario/`). Sin herramientas de test añadidas
 (constitución V): la verificación combina **tres fuentes distintas**, que se indican en cada fila para no

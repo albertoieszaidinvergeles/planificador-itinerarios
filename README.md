@@ -18,8 +18,8 @@ pantalla**.
 |---|---|---|
 | Proceso | Construcción manual e incremental del equipo | Proyecto nuevo desde cero con **GitHub Spec Kit** + asistencia de IA |
 | Identidad | Sin Clerk | **Clerk** (acceso con Google, modal en la misma SPA, token verificado en backend) |
-| Despliegue | **Vercel** (frontend y backend) | **Vercel** (demo de Clerk) + **Docker en AWS EC2** (definitivo) |
-| Código | `app1/` | `app2/` (backend implementado según la spec; frontend pendiente) | 
+| Despliegue | **Vercel** (frontend y backend) | **Vercel** (frontend, API y Clerk) + **Docker en AWS EC2** (pendiente) |
+| Código | `app1/` | `app2/` (frontend y backend implementados según la spec) |
 
 ## Estructura del repositorio 
 
@@ -38,7 +38,7 @@ planificador-itinerarios/
 ├── app1/
 │   ├── backend/          # main.py (app = FastAPI()), ia.py, requirements.txt, .env.example, tests/
 │   └── frontend/         # Vue 3 + Vite + Tailwind (SPA única)
-├── app2/                 # .specify/ · specs/ · backend/ · frontend/ (backend listo; frontend pendiente)
+├── app2/                 # .specify/ · specs/ · backend/ · frontend/ · API y proxy Clerk para Vercel
 ├── infra/                # Dockerfile.backend · Dockerfile.frontend · compose.yaml · .env.example · proxy/
 └── presentacion/         # defensa.pptx
 ```
@@ -115,18 +115,20 @@ Set-Location app2\backend
 La suite cubre: entrada válida (una sola llamada al mock), entrada inválida (422 sin llamar
 a la IA), límites de longitud, fallo del proveedor (502) y timeout (504); en App 2 se añaden
 los rechazos de Clerk (401). Matriz y prueba real documentada en [`docs/pruebas.md`](docs/pruebas.md).
-Última ejecución de App 2: **45 passed** el 29/10/2026. La integración manual con Clerk y
-la interfaz de App 2 siguen pendientes.
+Última ejecución automatizada de App 2: **45 passed** el 29/10/2026. El frontend está
+terminado y App 2 está desplegada en Vercel; Manuel confirmó una petición real autenticada
+correcta el 03/11/2026. La captura y el flujo completo de Google/cierre de sesión en
+producción siguen pendientes.
 
 ## URLs (despliegues)
 
 | Aplicación | Capa | URL | Estado |
 |---|---|---|---|
 | App 1 | Vercel | ACABADA | https://planificador-itinerarios-iota.vercel.app/|
-| App 2 | Vercel | _(pendiente)_ | ⬜ H10 |
+| App 2 | Vercel | [planificador-itinerarios.vercel.app](https://planificador-itinerarios.vercel.app/) | ✅ H10 — web y API desplegadas; prueba autenticada confirmada |
 | App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | ⬜ H11 |
 
-Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) está en
+Toda la configuración reproducible (CLI, variables, Clerk, Docker, EC2 y cómo se inicia la API en Vercel) está en
 [`docs/despliegues.md`](docs/despliegues.md).
 
 ## Documentación
@@ -138,8 +140,8 @@ Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) e
 | [docs/proceso.md](docs/proceso.md) | Decisiones e incidencias a medida que ocurren |
 | [docs/changelog.md](docs/changelog.md) | Registro de cambios y tiempo dedicado por hito |
 | [docs/pruebas.md](docs/pruebas.md) | Matriz de pruebas, comandos y prueba real documentada |
-| [docs/comparativa.md](docs/comparativa.md) | Comparación App 1 vs App 2 con evidencias |
-| [docs/despliegues.md](docs/despliegues.md) | Vercel (2 proyectos por app), CLI, Clerk, Docker y EC2 |
+| [docs/comparativa.md](docs/comparativa.md) | Comparación App 1 vs App 2 con evidencias y tiempos aproximados |
+| [docs/despliegues.md](docs/despliegues.md) | Vercel (un proyecto por app), API serverless, proxy Clerk, CLI, Docker y EC2 |
 | [docs/uso-ia.md](docs/uso-ia.md) | Registro del uso de IA: qué se aceptó, qué se rechazó, verificación humana |
 | [Propuesta de fases](docs/PropuestaFases.pdf) | Planificación por fases del proyecto |
 | [Resumen del enunciado](docs/ResumenEnunciado.pdf) | Resumen de los requisitos de la práctica |
@@ -148,7 +150,7 @@ Toda la configuración reproducible (CLI, variables, CORS, Clerk, Docker, EC2) e
 
 H0 inicio · H1 backend mínimo · H2 contrato y errores · H3 pruebas · H4 frontend ·
 H5 integración · H6 Tailwind y revisión · **H7 Vercel App 1** · H8 Spec Kit · H9 App 2 ·
-**H10 Clerk + Vercel App 2** · **H11 Docker + EC2** · H12 cierre (comparativa y presentación).
+**H10 Clerk + Vercel App 2 (desplegado)** · **H11 Docker + EC2** · H12 cierre (comparativa y presentación).
 
 ## Presentación (para la defensa)
 

@@ -40,6 +40,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 29/10/2026 | Manuel | H9 | App 2 | Frontend, Fase 2 con `/speckit-implement` (T007–T008): `src/main.js` (Vue + `clerkPlugin` con la publishable key y error claro si falta) y `src/App.vue` (pantalla única con `SignInButton` en modo modal y `UserButton`). Probado en local: modal de Clerk sin cambiar de página, acceso con Google, avatar y cierre de sesión. `npm run build` correcto y sin secretos en `dist/` | 50 | rama `main` |
 | 29/10/2026 | Manuel | H9 | App 2 | Frontend T009–T012 con `/speckit-implement`: campos ciudad/fecha/personas/gustos con etiquetas, validación propia al enviar (`novalidate`, recorte de espacios, entero 1–20, «hoy» local recalculado al enviar, `aria-invalid`/`aria-describedby`) con mensajes en lenguaje de usuario, selector de compañía (Amigos/Familia/Pareja según personas, se borra si deja de valer) y sufijo en `gustos` validado sobre el texto final (máx. 200) sin campo `compania` en los datos. Probado en navegador y 32 casos de lógica comprobados | 60 | rama `main` |
 | 02/11/2026 | Manuel | H9 | App 2 | Frontend T013–T024 con `/speckit-implement`, **frontend de App 2 terminado (24/24 tareas)**: backend de App 2 montado en local (`.venv` + `.env`); envío autenticado a `POST /api/plan` con el token de Clerk (probado con `200` real), estado de espera sin dobles envíos, plan en tres tarjetas, errores 422/401/500/502/504/red con «Reintentar», accesibilidad (mensajes anunciados, foco en errores, resultado y botones) y diseño a 320 px. Verificación en `docs/pruebas.md` §«Comprobación del frontend — App 2» (F01–F19: pasada manual en navegador + 78 casos de lógica + build sin secretos). Detectados en el backend: 401/500 sin CORS en local y respuesta de 28,65 s con `AI_TIMEOUT=20` | 150 | `4d01641`, `78ebcba` y commit de cierre |
+| 03/11/2026 | Alberto | H10 | App 2 | Integración, depuración y prueba del despliegue Vercel: función ASGI para `/api/plan`, exclusión de la API de la reescritura SPA, Routing Middleware para `/__clerk`, reenvío de IP del visitante, configuración del proxy Clerk y petición real autenticada confirmada como funcional | ~180 | `15bd33e`, `bf5a101`, `9dedd13`, `45a51e0`, `f8eeabd`; prueba manual en `docs/pruebas.md` |
 
 ## Tiempo total por hito
 
@@ -54,3 +55,8 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H6 | | 130 | 130 |
 | H8 | 120 | 30 | 150 |
 | H9 | 290 | 120 | 410 |
+| H10 | | ~180 | ~180 |
+
+> El tiempo de Alberto para H10 es aproximado (unas 3 h, comunicado el 03/11/2026); no se ha
+> calculado a partir de la duración ni del número de commits. No se asigna tiempo a Manuel
+> para este hito.
