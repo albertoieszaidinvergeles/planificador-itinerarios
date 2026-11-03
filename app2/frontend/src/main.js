@@ -14,6 +14,9 @@ if (!publishableKey) {
 }
 
 // Instala Clerk antes de montar la única pantalla de la aplicación.
+// proxyUrl: todas las llamadas al servidor de Clerk pasan por el proxy del
+// mismo origen (/__clerk -> función api/clerk-proxy en Vercel), necesario
+// porque la instancia production no tiene DNS propio (clerk.<app>.vercel.app).
 createApp(App)
-  .use(clerkPlugin, { publishableKey })
+  .use(clerkPlugin, { publishableKey, proxyUrl: '/__clerk' })
   .mount('#app')

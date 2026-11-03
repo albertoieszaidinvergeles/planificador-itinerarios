@@ -94,19 +94,28 @@ def test_bearer_ausente_o_malformado_se_rechaza(authorization):
         auth.bearer_token(authorization)
 
 
-def test_jwks_url_se_deriva_del_issuer(
-    pares_rsa, crear_token, simular_jwks, monkeypatch
-):
+def test_url_jwks_por_defecto(pares_rsa, crear_token, jwks_publico, monkeypatch):
     urls = []
-    original = auth.PyJWKClient
-
-    class ClienteJWKS(original):
-        def __init__(self, uri, *args, **kwargs):
-            urls.append(uri)
-            super().__init__(uri, *args, **kwargs)
-
-    monkeypatch.setattr(auth, "PyJWKClient", ClienteJWKS)
+    monkeypatch.setattr(
+        "auth._descargar_jwks",
+        lambda url: (urls.append(url), jwks_publico["keys"])[1],
+    )
 
     auth.verify_session_token(crear_token(pares_rsa[0]))
 
-    assert urls == [ISSUER + "/.well-known/jwks.json"]
+    assert urls == ["https://api.clerk.com/v1/jwks"]
+
+
+def test_url_jwks_se_puede_configurar(
+    pares_rsa, crear_token, jwks_publico, monkeypatch
+):
+    monkeypatch.setenv("CLERK_JWKS_URL", "https://ejemplo.test/jwks")
+    urls = []
+    monkeypatch.setattr(
+        "auth._descargar_jwks",
+        lambda url: (urls.append(url), jwks_publico["keys"])[1],
+    )
+
+    auth.verify_session_token(crear_token(pares_rsa[0]))
+
+    assert urls == ["https://ejemplo.test/jwks"]

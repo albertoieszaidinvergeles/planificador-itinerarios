@@ -6,6 +6,8 @@ import httpx
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+import auth
+
 
 @pytest.fixture(autouse=True)
 def bloquear_red(monkeypatch):
@@ -15,6 +17,12 @@ def bloquear_red(monkeypatch):
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", prohibido)
     monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", prohibido)
     monkeypatch.setattr(urllib.request, "urlopen", prohibido)
+
+
+@pytest.fixture(autouse=True)
+def limpiar_cache_jwks(monkeypatch):
+    """Cada test empieza sin JWKS cacheado en auth._JWKS_CACHE."""
+    monkeypatch.setattr(auth, "_JWKS_CACHE", {"keys": None, "fetched_at": 0.0})
 
 
 @pytest.fixture
@@ -60,8 +68,8 @@ def simular_jwks(monkeypatch, jwks_publico):
     def instalar(jwks=None):
         contenido = jwks if jwks is not None else jwks_publico
         monkeypatch.setattr(
-            "auth.PyJWKClient.fetch_data",
-            lambda _cliente: contenido,
+            "auth._obtener_claves_jwks",
+            lambda: contenido["keys"],
         )
 
     instalar()

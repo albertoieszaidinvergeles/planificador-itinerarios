@@ -41,7 +41,7 @@ def test_sin_token_precede_cuerpo_invalido_y_no_llama_ia(cliente, monkeypatch):
     assert respuesta.json() == {
         "error": {
             "codigo": "NO_AUTENTICADO",
-            "mensaje": "No autenticado.",
+            "mensaje": main.MENSAJE_NO_AUTENTICADO,
         }
     }
     for nombre, valor in main.CABECERAS_SEGURIDAD.items():
