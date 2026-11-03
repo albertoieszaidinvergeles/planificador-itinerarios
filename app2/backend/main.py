@@ -19,7 +19,9 @@ CABECERAS_SEGURIDAD = {
     "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
 }
 CSP_API = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
-MENSAJE_NO_AUTENTICADO = "No autenticado."
+
+# Fix 2: mensaje unificado entre 401 y doc técnico
+MENSAJE_NO_AUTENTICADO = "Inicia sesión para continuar."
 
 
 class IAError(Exception):
@@ -89,15 +91,16 @@ def create_app(
         redoc_url="/redoc" if docs_activos else None,
         openapi_url="/openapi.json" if docs_activos else None,
     )
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_methods=["POST"],
-        allow_headers=["Content-Type", "Authorization"],
-    )
+
+    # Fix 1: CORS debe envolver al middleware de auth para que los 401/500
+    # también lleven Access-Control-Allow-Origin.
+    # En Starlette el orden de add_middleware es LIFO: el último registrado
+    # se ejecuta primero. Por eso registramos primero el middleware http
+    # (auth + seguridad) y después CORSMiddleware, que así queda más externo.
 
     @app.middleware("http")
     async def seguridad_y_autenticacion(request: Request, call_next):
+        # OPTIONS (preflight CORS) pasa sin autenticación
         if request.url.path == "/api/plan" and request.method == "POST":
             try:
                 auth.verify_bearer_token(request.headers.get("authorization"))
@@ -112,6 +115,13 @@ def create_app(
 
         aplicar_cabeceras_seguridad(response, request.url.path)
         return response
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_methods=["POST"],
+        allow_headers=["Content-Type", "Authorization"],
+    )
 
     @app.exception_handler(Exception)
     async def error_interno(request: Request, _exc: Exception) -> JSONResponse:
