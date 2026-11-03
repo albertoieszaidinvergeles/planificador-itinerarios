@@ -3,8 +3,11 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "echo skip",
   "framework": null,
+  "proxy": {
+    "entrypoint": "proxy.js",
+    "matcher": ["/__clerk/:path*"]
+  },
   "rewrites": [
-    { "source": "/__clerk/(.*)", "destination": "/api/clerk-proxy/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
