@@ -19,7 +19,7 @@ pantalla**.
 | Proceso | Construcción manual e incremental del equipo | Proyecto nuevo desde cero con **GitHub Spec Kit** + asistencia de IA |
 | Identidad | Sin Clerk | **Clerk** (acceso con Google, modal en la misma SPA, token verificado en backend) |
 | Despliegue | **Vercel** (frontend y backend) | **Vercel** (demo de Clerk) + **Docker en AWS EC2** (definitivo) |
-| Código | `app1/` | `app2/` (backend implementado según la spec; frontend pendiente) |
+| Código | `app1/` | `app2/` (backend implementado según la spec; frontend pendiente) | 
 
 ## Estructura del repositorio
 
