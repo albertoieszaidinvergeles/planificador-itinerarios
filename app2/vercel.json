@@ -3,13 +3,7 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "echo skip",
   "framework": null,
-  "functions": {
-    "api/plan.py": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
-    { "source": "/api/plan", "destination": "/api/plan" },
-    { "source": "/(.*)",     "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
