@@ -12,7 +12,7 @@ pantalla**.
 > sola API de IA (OpenRouter). **Cero persistencia** (sin BD, sin `localStorage`), sin CRUD
 > y sin pantallas adicionales. Ver [`docs/ERS.md`](docs/ERS.md).
  
-## Las dos aplicaciones
+## Las dos aplicaciones 
  
 | | **App 1** | **App 2** |
 |---|---|---|
