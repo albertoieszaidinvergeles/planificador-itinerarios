@@ -21,7 +21,7 @@ pantalla**.
 | Despliegue | **Vercel** (frontend y backend) | **Vercel** (demo de Clerk) + **Docker en AWS EC2** (definitivo) |
 | Código | `app1/` | `app2/` (backend implementado según la spec; frontend pendiente) | 
 
-## Estructura del repositorio
+## Estructura del repositorio 
 
 ```text
 planificador-itinerarios/
