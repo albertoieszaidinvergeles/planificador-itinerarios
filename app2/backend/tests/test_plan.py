@@ -69,6 +69,29 @@ def test_token_invalido_no_llama_ia(cliente, monkeypatch):
     assert llamadas == []
 
 
+def test_rechazo_de_sesion_se_registra_sin_incluir_el_token(
+    cliente, monkeypatch, caplog
+):
+    token = "token-privado-de-prueba"
+
+    def token_caducado(_authorization):
+        raise main.auth.AuthenticationError(reason="token_expired")
+
+    monkeypatch.setattr(main.auth, "verify_bearer_token", token_caducado)
+    with caplog.at_level("WARNING", logger="main"):
+        respuesta = cliente.post(
+            "/api/plan",
+            json=entrada_valida(),
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert respuesta.status_code == 401
+    assert "reason=token_expired" in caplog.text
+    assert "POST" in caplog.text
+    assert "/api/plan" in caplog.text
+    assert token not in caplog.text
+
+
 def test_token_firmado_por_otra_clave_devuelve_401(
     monkeypatch, pares_rsa, crear_token, simular_jwks
 ):

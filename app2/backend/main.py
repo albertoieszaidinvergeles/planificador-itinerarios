@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import date
 
@@ -9,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.responses import Response
 
 import auth
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -104,7 +107,13 @@ def create_app(
         if request.url.path == "/api/plan" and request.method == "POST":
             try:
                 auth.verify_bearer_token(request.headers.get("authorization"))
-            except auth.AuthenticationError:
+            except auth.AuthenticationError as error:
+                logger.warning(
+                    "Authentication rejected: reason=%s method=%s path=%s",
+                    error.reason,
+                    request.method,
+                    request.url.path,
+                )
                 response = respuesta_error(
                     401, "NO_AUTENTICADO", MENSAJE_NO_AUTENTICADO
                 )

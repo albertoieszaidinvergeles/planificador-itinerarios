@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 import time
 from typing import Any
 
 import httpx
 import jwt
+
+logger = logging.getLogger(__name__)
 
 # JWKS por defecto: la API backend de Clerk (la Frontend API ya no publica
 # /.well-known/jwks.json en el emisor de la instancia).
@@ -17,6 +20,14 @@ _JWKS_CACHE: dict[str, Any] = {"keys": None, "fetched_at": 0.0}
 
 class AuthenticationError(Exception):
     """A session token is missing or cannot be verified."""
+
+    def __init__(
+        self,
+        message: str = "Invalid Clerk session token.",
+        reason: str = "invalid_token",
+    ):
+        super().__init__(message)
+        self.reason = reason
 
 
 def jwks_url() -> str:
@@ -32,7 +43,9 @@ def _descargar_jwks(url: str) -> list[dict[str, Any]]:
     response.raise_for_status()
     keys = response.json().get("keys") or []
     if not keys:
-        raise AuthenticationError("Clerk JWKS does not contain any key.")
+        raise AuthenticationError(
+            "Clerk JWKS does not contain any key.", reason="jwks_empty"
+        )
     return keys
 
 
@@ -55,16 +68,18 @@ def _buscar_clave(kid: str | None) -> dict[str, Any]:
         for clave in claves:
             if clave.get("kid") == kid:
                 return clave
-        raise AuthenticationError("Invalid Clerk session token.")
+        raise AuthenticationError(reason="jwks_key_id_not_found")
     if len(claves) == 1:
         return claves[0]
-    raise AuthenticationError("Invalid Clerk session token.")
+    raise AuthenticationError(reason="jwks_key_id_missing")
 
 
 def verify_session_token(token: str) -> dict[str, Any]:
     issuer = os.getenv("CLERK_ISSUER", "").strip()
     if not issuer:
-        raise AuthenticationError("Clerk issuer is not configured.")
+        raise AuthenticationError(
+            "Clerk issuer is not configured.", reason="issuer_not_configured"
+        )
 
     audience = os.getenv("CLERK_AUDIENCE", "").strip() or None
 
@@ -74,8 +89,12 @@ def verify_session_token(token: str) -> dict[str, Any]:
         signing_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
     except AuthenticationError:
         raise
-    except (jwt.PyJWTError, ValueError, TypeError, KeyError, httpx.HTTPError) as error:
-        raise AuthenticationError("Invalid Clerk session token.") from error
+    except httpx.HTTPError as error:
+        raise AuthenticationError(reason="jwks_fetch_failed") from error
+    except jwt.PyJWTError as error:
+        raise AuthenticationError(reason="invalid_token_header") from error
+    except (ValueError, TypeError, KeyError) as error:
+        raise AuthenticationError(reason="invalid_jwks_key") from error
 
     try:
         return jwt.decode(
@@ -89,13 +108,23 @@ def verify_session_token(token: str) -> dict[str, Any]:
                 "verify_aud": audience is not None,
             },
         )
+    except jwt.ExpiredSignatureError as error:
+        raise AuthenticationError(reason="token_expired") from error
+    except jwt.InvalidIssuerError as error:
+        raise AuthenticationError(reason="token_issuer_mismatch") from error
+    except jwt.InvalidAudienceError as error:
+        raise AuthenticationError(reason="token_audience_mismatch") from error
+    except jwt.InvalidSignatureError as error:
+        raise AuthenticationError(reason="token_signature_invalid") from error
     except (jwt.PyJWTError, ValueError, TypeError, KeyError) as error:
-        raise AuthenticationError("Invalid Clerk session token.") from error
+        raise AuthenticationError(reason="invalid_token") from error
 
 
 def bearer_token(authorization: str | None) -> str:
     if not authorization:
-        raise AuthenticationError("Missing bearer token.")
+        raise AuthenticationError(
+            "Missing bearer token.", reason="missing_bearer_token"
+        )
 
     scheme, separator, credentials = authorization.partition(" ")
     if (
@@ -105,7 +134,9 @@ def bearer_token(authorization: str | None) -> str:
         or credentials.strip() != credentials
         or " " in credentials
     ):
-        raise AuthenticationError("Invalid bearer token.")
+        raise AuthenticationError(
+            "Invalid bearer token.", reason="invalid_bearer_header"
+        )
 
     return credentials
 

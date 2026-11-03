@@ -52,8 +52,10 @@ def test_expiracion_vencida_se_rechaza(pares_rsa, crear_token, simular_jwks):
         exp=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
 
-    with pytest.raises(auth.AuthenticationError):
+    with pytest.raises(auth.AuthenticationError) as error:
         auth.verify_session_token(token)
+
+    assert error.value.reason == "token_expired"
 
 
 def test_claim_exp_es_obligatorio(pares_rsa, crear_token, simular_jwks):
