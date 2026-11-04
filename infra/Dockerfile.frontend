@@ -1,0 +1,28 @@
+# Imagen web de App 2: compila el frontend de Vue y lo sirve con Caddy.
+# Se construye desde la raíz del repositorio (ver compose.yaml).
+# Tiene dos fases para que la imagen final no lleve Node, node_modules ni el código fuente.
+
+# --- Fase 1: compilar el frontend con Node ---
+FROM node:22-slim AS compilacion
+
+WORKDIR /app
+
+# Instala las versiones exactas del package-lock.json (npm ci).
+COPY app2/frontend/package.json app2/frontend/package-lock.json ./
+RUN npm ci
+
+COPY app2/frontend/ ./
+
+# La publishable key de Clerk es pública: Vite la mete en el bundle al compilar.
+ARG VITE_CLERK_PUBLISHABLE_KEY
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+# Base vacía: el frontend llama a /api/plan en su misma dirección, sin CORS.
+ENV VITE_API_BASE_URL=
+
+RUN npm run build
+
+# --- Fase 2: la imagen final, solo Caddy y la página compilada ---
+FROM caddy:2-alpine
+
+COPY infra/proxy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=compilacion /app/dist /srv

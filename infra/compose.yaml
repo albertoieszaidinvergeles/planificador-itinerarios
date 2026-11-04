@@ -1,0 +1,47 @@
+# Arranca App 2 completa con dos contenedores. Uso, desde la carpeta infra/:
+#   docker compose up -d --build     construye y arranca
+#   docker compose ps                estado
+#   docker compose logs -f           mensajes
+#   docker compose down              para y borra los contenedores
+#
+# Las variables salen de infra/.env (copia de .env.example; nunca se sube a Git).
+
+name: planificador-app2
+
+services:
+  # API FastAPI. No publica puertos: solo se llega a ella a través del contenedor web.
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.backend
+    # Las claves se inyectan al arrancar: nunca quedan dentro de la imagen.
+    env_file: .env
+    # Vuelve a arrancar solo si la máquina se reinicia (el Learner Lab la apaga al acabar la sesión).
+    restart: unless-stopped
+
+  # Caddy: sirve la página, reenvía /api al backend y gestiona el HTTPS.
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.frontend
+      args:
+        # Es pública: se necesita al compilar, porque Vite la incluye en el bundle.
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:?Falta VITE_CLERK_PUBLISHABLE_KEY en infra/.env}
+    # Este contenedor solo recibe DOMINIO: la clave de la IA no entra aquí.
+    environment:
+      DOMINIO: ${DOMINIO:?Falta DOMINIO en infra/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    volumes:
+      # Guarda los certificados HTTPS de Caddy para no pedirlos otra vez en cada reinicio.
+      # Es infraestructura: la aplicación sigue sin guardar ningún dato.
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

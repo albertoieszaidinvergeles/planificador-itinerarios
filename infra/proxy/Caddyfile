@@ -1,0 +1,33 @@
+# Configuración de Caddy para App 2: una sola dirección para la página y la API.
+#
+# {$DOMINIO} sale de infra/.env:
+#   - en local: http://localhost        → sirve por HTTP, sin certificado.
+#   - en EC2:   1-2-3-4.sslip.io        → Caddy saca y renueva solo el certificado HTTPS.
+{$DOMINIO} {
+	# Comprime las respuestas para que la página cargue antes.
+	encode gzip
+
+	# No revela qué servidor se usa (mismo criterio que --no-server-header en el backend).
+	header -Server
+
+	# La API va al contenedor del backend. Sus cabeceras de seguridad las pone el propio backend.
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Todo lo demás es la página de Vue.
+	handle {
+		# Cabeceras de seguridad de la página (las mismas que da el backend en la API).
+		header {
+			X-Content-Type-Options nosniff
+			Referrer-Policy strict-origin-when-cross-origin
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+			Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		}
+
+		root * /srv
+		# Si la ruta no es un archivo real, devuelve la pantalla única (index.html).
+		try_files {path} /index.html
+		file_server
+	}
+}

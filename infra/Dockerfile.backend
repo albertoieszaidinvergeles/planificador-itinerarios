@@ -1,0 +1,28 @@
+# Imagen del backend de App 2 (FastAPI + uvicorn).
+# Se construye desde la raíz del repositorio (ver compose.yaml).
+# No lleva ningún secreto: las claves se inyectan al arrancar, desde infra/.env.
+
+FROM python:3.12-slim
+
+# No guarda archivos .pyc y muestra los mensajes de Python al momento en los logs.
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Instala primero las dependencias: si solo cambia el código, Docker reutiliza este paso.
+COPY app2/backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia solo los módulos del backend (*.py de esa carpeta): los tests no entran en la imagen.
+COPY app2/backend/*.py ./
+
+# Ejecuta la aplicación con un usuario sin privilegios, no como administrador (root).
+RUN useradd --create-home appuser
+USER appuser
+
+# Puerto interno: solo lo ve el contenedor web por la red de Docker, no se publica fuera.
+EXPOSE 8000
+
+# 0.0.0.0 para aceptar conexiones de otros contenedores; sin cabecera Server, igual que en App 1.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--no-server-header"]

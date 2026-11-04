@@ -1,0 +1,17 @@
+# Lista de lo que se PERMITE enviar a Docker al construir las imágenes.
+# Se ignora todo y solo se deja pasar lo imprescindible: así es imposible que se
+# cuele un .env, una clave, .git, .venv o node_modules.
+*
+
+# Backend: solo el código y sus dependencias (los tests no entran).
+!app2/backend/*.py
+!app2/backend/requirements.txt
+
+# Frontend: su carpeta, menos lo que se genera y los .env.
+!app2/frontend
+app2/frontend/node_modules
+app2/frontend/dist
+app2/frontend/.env*
+
+# Configuración de Caddy.
+!infra/proxy/Caddyfile
