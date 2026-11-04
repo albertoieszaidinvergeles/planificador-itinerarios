@@ -76,6 +76,28 @@ La respuesta anónima `401` no significa que el backend esté apagado: confirma 
 está atendida y que la autenticación rechaza la petición antes de procesarla. No se repitió
 la solicitud autenticada desde esta revisión porque requiere la sesión privada del usuario.
 
+### Verificación de App 2 en EC2 (04/11/2026)
+
+URL pública: <https://107-20-112-76.sslip.io/>. Las peticiones directas las ejecutó Claude desde fuera de la
+máquina; las pruebas con sesión las hizo Manuel en el navegador.
+
+| Comprobación | Resultado | Fuente |
+|---|---|---|
+| Certificado HTTPS | Let's Encrypt, verificación correcta | Petición HTTP directa y `openssl` |
+| `http://` | `308` a `https://` | Petición HTTP directa |
+| `GET /` | `200` | Petición HTTP directa |
+| `POST /api/plan` sin token y con token inventado | `401 NO_AUTENTICADO` | Petición HTTP directa |
+| `/api/docs` | `404` | Petición HTTP directa |
+| Puerto 8000 del backend desde internet | Sin respuesta | Petición HTTP directa |
+| Cabeceras de seguridad en la página y en la API, sin cabecera `Server` | Presentes | Petición HTTP directa |
+| Secretos en el bundle publicado (`sk_…`, `sk-or-…`) | 0 coincidencias; clave pública `pk_test_` | Búsqueda en el bundle |
+| Imágenes Docker | Sin `.env`, tests, `node_modules` ni código fuente del front; backend con usuario sin privilegios; la clave de IA solo en `backend` | Inspección de los contenedores (en local) |
+| Reinicio de la máquina (`sudo reboot`) | La web y la API vuelven solas; se conserva el certificado | Reinicio de Manuel; comprobación por petición HTTP directa |
+| Acceso con Google, plan en tarjetas, error de campo, modal sin sesión y cierre de sesión | Funcionan | Prueba manual de Manuel en el navegador |
+| Plan desde otro dispositivo (móvil con datos móviles) | Funciona | Prueba manual de Manuel |
+
+Capturas (sin datos personales ni secretos) en `docs/evidencias/ec2/`.
+
 Frontend de `app2/frontend` (spec `app2/specs/002-planificador-diario/`). Sin herramientas de test añadidas
 (constitución V): la verificación combina **tres fuentes distintas**, que se indican en cada fila para no
 mezclarlas:

@@ -42,6 +42,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | 02/11/2026 | Manuel | H9 | App 2 | Frontend T013–T024 con `/speckit-implement`, **frontend de App 2 terminado (24/24 tareas)**: backend de App 2 montado en local (`.venv` + `.env`); envío autenticado a `POST /api/plan` con el token de Clerk (probado con `200` real), estado de espera sin dobles envíos, plan en tres tarjetas, errores 422/401/500/502/504/red con «Reintentar», accesibilidad (mensajes anunciados, foco en errores, resultado y botones) y diseño a 320 px. Verificación en `docs/pruebas.md` §«Comprobación del frontend — App 2» (F01–F19: pasada manual en navegador + 78 casos de lógica + build sin secretos). Detectados en el backend: 401/500 sin CORS en local y respuesta de 28,65 s con `AI_TIMEOUT=20` | 150 | `4d01641`, `78ebcba` y commit de cierre |
 | 03/11/2026 | Alberto | H10 | App 2 | Integración, depuración y prueba del despliegue Vercel: función ASGI para `/api/plan`, exclusión de la API de la reescritura SPA, Routing Middleware para `/__clerk`, reenvío de IP del visitante, configuración del proxy Clerk y petición real autenticada confirmada como funcional | ~180 | `15bd33e`, `bf5a101`, `9dedd13`, `45a51e0`, `f8eeabd`; prueba manual en `docs/pruebas.md` |
 | 04/11/2026 | Manuel | H10 | App 2 | Revisión del despliegue de Vercel (comprobado en vivo: web `200`, `401` sin token, cabeceras, sin secretos en el bundle, Clerk production) y arreglo del entorno local: el proxy `/__clerk` solo se usa con la clave `pk_live_` (con `pk_test_` Clerk va directo, sin clave secreta) y `CLERK_JWKS_URL` local apunta al JWKS de la instancia de desarrollo. Probado en local: acceso con Google y plan `200`. Producción sin cambios hasta el próximo despliegue | 30 | `8f0ac78` |
+| 04/11/2026 | Manuel | H11 | App 2 | Docker y AWS EC2: `infra/` (Dockerfiles, `compose.yaml`, `Caddyfile`, `.env.example`) y `.dockerignore`, escritos por Claude con revisión de Manuel; prueba en local; instancia `t3.small` en AWS Academy Learner Lab con IP elástica y grupo de seguridad; HTTPS con Let's Encrypt en `107-20-112-76.sslip.io`. Probado en navegador y móvil, y tras reinicio. Documentado en `despliegues.md`, `pruebas.md` y `proceso.md` | 120 | `85dc002` y commit de documentación |
 
 ## Tiempo total por hito
 
@@ -57,6 +58,7 @@ cada rama o PR, no al final. Los motivos de las decisiones van en [`proceso.md`]
 | H8 | 120 | 30 | 150 |
 | H9 | 290 | 120 | 410 |
 | H10 | 30 | ~180 | ~210 |
+| H11 | 120 | | 120 |
 
 > El tiempo de Alberto para H10 es aproximado (unas 3 h, comunicado el 03/11/2026); no se ha
 > calculado a partir de la duración ni del número de commits.

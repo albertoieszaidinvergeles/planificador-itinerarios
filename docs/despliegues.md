@@ -9,7 +9,7 @@
 |---|---|---|---|---|---|
 | App 1 | Vercel (frontend + API) | <https://planificador-itinerarios-iota.vercel.app/> | 19/10/2026 | `984187f` | ✅ H7 **desplegado y verificado (S19)**: `/` → `200` con las 10 cabeceras, `/docs` → `404`, `POST /api/plan` válido → `200 {"resultado": …}` en 5,4 s |
 | App 2 | Vercel (frontend + API + proxy Clerk) | <https://planificador-itinerarios.vercel.app/> | 03/11/2026 | — | ✅ H10 desplegado; `/` → `200`, `POST /api/plan` sin sesión → `401`; Alberto confirma una petición real autenticada correcta |
-| App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | | | ⬜ H11 |
+| App 2 | EC2 (Docker, HTTPS) | <https://107-20-112-76.sslip.io/> | 04/11/2026 | `85dc002` | ✅ H11 desplegado y probado: HTTPS con Let's Encrypt, acceso con Google y plan en navegador y móvil, recuperación tras reinicio. **Solo responde mientras el Learner Lab esté iniciado** (ver §5.2) |
 
 > **Nota (19/10/2026):** la URL del *deployment* concreto
 > (<https://planificador-itinerarios-6o6a7zvgf-ies-zaidin-vergeles2.vercel.app/>) responde
@@ -107,37 +107,77 @@ Notas:
 
 ## 4. Docker local (solo App 2)
 
-```bash
-docker --version && docker compose version
-docker compose build
-docker compose up -d
+Dos contenedores: `web` (Caddy: sirve la página compilada, reenvía `/api/*` a `backend` y gestiona
+el HTTPS) y `backend` (FastAPI, sin puertos publicados). Front y API comparten dirección: sin CORS.
+
+```powershell
+# Desde infra/ (Docker Desktop abierto). La primera vez, copiar y rellenar el .env:
+Copy-Item .env.example .env
+docker compose up -d --build
 docker compose ps
-docker compose logs
-# probar: entrada válida · error · acceso Clerk · reinicio → sin historial (no hay persistencia)
+docker compose logs --tail 30
+# Probar en http://localhost: entrada válida · error · acceso Clerk · recargar → sin historial
 docker compose down
 ```
 
-- `infra/Dockerfile.backend` → Python/FastAPI con **uvicorn en `0.0.0.0`** (puerto interno elegido).
-- `infra/Dockerfile.frontend` → compila Vite y sirve estáticos; **proxy** reenvía `/api` al backend (URL única de origen).
-- **Sin** servicios de BD, volúmenes de datos ni cachés.
-- `.dockerignore` excluye `.env`, credenciales y dependencias; los secretos se inyectan **al ejecutar**, nunca en la imagen.
-- Las variables `VITE_*` se resuelven en compilación: cambiar la URL exige reconstruir.
+- `infra/Dockerfile.backend` → Python 3.12 con **uvicorn en `0.0.0.0:8000`**, usuario sin privilegios, sin tests ni secretos.
+- `infra/Dockerfile.frontend` → dos fases: Node compila Vite y la imagen final solo lleva Caddy y `dist/`.
+- `infra/proxy/Caddyfile` → `{$DOMINIO}`: con `http://localhost` sirve por HTTP; con un dominio público saca y renueva el certificado.
+- `infra/compose.yaml` → `restart: unless-stopped`. La clave de la IA solo llega al contenedor `backend`.
+- **Sin** servicios de BD, datos de la aplicación ni cachés. Los volúmenes `caddy_data` y `caddy_config` solo guardan los **certificados HTTPS** y la configuración de Caddy (infraestructura, no datos de usuario).
+- `.dockerignore` (en la raíz) es una **lista de permitidos**: se ignora todo salvo el código necesario; `.env`, `.venv`, `node_modules` y `.git` no entran. Los secretos se inyectan **al ejecutar**, nunca en la imagen.
+- Las variables `VITE_*` se resuelven en compilación: cambiar la publishable key exige reconstruir (`--build`).
 
 ## 5. AWS EC2 (solo App 2)
 
-1. [ ] Acceso, región y presupuesto confirmados con el docente; costes revisados antes de crear recursos.
-2. [ ] Instancia pequeña; clave SSH protegida; anotar SO, región y tamaño.
-3. [ ] Grupo de seguridad: SSH **solo desde IPs autorizadas**; solo puertos web (80/443) publicados.
-4. [ ] Docker + Compose instalados; código traído del repositorio **sin credenciales**.
-5. [ ] Secretos en el servidor, fuera del repo y con permisos restringidos.
-6. [ ] **URL pública con HTTPS** (proxy con TLS + DNS) para probar Clerk con tokens — nunca enviar credenciales por HTTP.
-7. [ ] Prueba desde otro dispositivo: frontend, acceso, respuesta IA y errores. Anotar URL, versión Git, puertos y procedimiento de actualización.
-8. [ ] Recuperación tras reinicio documentada (política simple de contenedores; sin logs con respuestas).
-9. [ ] **Retirada de recursos al finalizar** (instancia, discos, IPs reservadas) según instrucciones del docente.
+### 5.1 Estado de la lista de comprobación
 
-**Evidencia mínima:** Dockerfile(s), `compose.yaml`, configuración no secreta, instrucciones
-reproducibles y captura/registro de la demo funcionando en EC2 (una instancia creada sin app
-accesible no vale).
+1. [x] Acceso: **AWS Academy Learner Lab** (cuenta de estudiante con créditos, sin tarjeta). Región `us-east-1`.
+2. [x] Instancia `t3.small` (2 vCPU, 2 GiB; compilar el frontend no cabe bien en 1 GiB), Ubuntu Server 24.04 LTS, disco `gp3` de 16 GiB. Clave SSH `vockey` (`labsuser.pem`), guardada fuera del repositorio.
+3. [x] Grupo de seguridad: **SSH (22) solo desde «Mi IP»**; HTTP (80) y HTTPS (443) abiertos. El puerto 8000 del backend no se publica (comprobado desde fuera).
+4. [x] Docker y Compose instalados desde los paquetes de Ubuntu; código traído del repositorio público **sin credenciales**.
+5. [x] Secretos en `infra/.env` del servidor (copiado con `scp`, `chmod 600`), fuera del repositorio y de las imágenes.
+6. [x] **URL pública con HTTPS**: <https://107-20-112-76.sslip.io/>, certificado de Let's Encrypt obtenido por Caddy. HTTP redirige a HTTPS (`308`).
+7. [x] Prueba desde otro dispositivo (móvil con datos móviles): frontend, acceso y respuesta de la IA. Resultados en `docs/pruebas.md`.
+8. [x] Recuperación tras reinicio comprobada: tras `sudo reboot`, la web y la API vuelven solas y se conserva el certificado.
+9. [ ] **Retirada de recursos al finalizar** (instancia, disco e IP elástica) según instrucciones del docente.
+
+**Evidencia:** `infra/` (Dockerfiles, `compose.yaml`, `Caddyfile`, `.env.example`), `.dockerignore` y capturas en
+`docs/evidencias/ec2/`: [candado HTTPS](evidencias/ec2/01-https-candado.png),
+[plan en tarjetas](evidencias/ec2/02-plan-en-tarjetas.png) y [`docker compose ps`](evidencias/ec2/03-docker-compose-ps.png).
+
+### 5.2 Learner Lab: lo que hay que saber antes de la demo
+
+- **La máquina solo funciona con el laboratorio iniciado.** Al acabar la sesión (o con **End Lab**) se apaga, sin borrarse. Antes de la defensa: AWS Academy → **Start Lab** → esperar el círculo verde → comprobar la URL.
+- Al encender, Docker arranca solo y `restart: unless-stopped` levanta los contenedores: no hay que ejecutar nada.
+- La **IP elástica** mantiene la dirección y, por tanto, el dominio y el certificado.
+- **Conectarse por SSH desde otra red:** la regla SSH solo admite la IP con la que se creó. Con otra wifi la conexión da `Connection timed out`: en EC2 → grupo de seguridad → reglas de entrada, cambiar el origen de SSH a «Mi IP». A quien usa la web no le afecta.
+
+### 5.3 Cómo repetir el despliegue
+
+```bash
+# En la máquina (Ubuntu 24.04), una vez:
+sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
+sudo systemctl enable --now docker
+sudo usermod -aG docker ubuntu   # después, salir (exit) y volver a entrar
+git clone https://github.com/albertoieszaidinvergeles/planificador-itinerarios.git
+```
+
+```powershell
+# En tu ordenador: copiar el .env sin pegar la clave en ningún sitio
+scp -i "$env:USERPROFILE\.ssh\labsuser.pem" infra\.env ubuntu@<IP-ELASTICA>:~/planificador-itinerarios/infra/.env
+```
+
+```bash
+# En la máquina: DOMINIO con la IP elástica separada por guiones
+cd ~/planificador-itinerarios/infra
+sed -i 's|^DOMINIO=.*|DOMINIO=<IP-CON-GUIONES>.sslip.io|' .env && chmod 600 .env
+docker compose up -d --build
+```
+
+**Actualizar a una versión nueva:** `git pull && docker compose up -d --build` desde `infra/`.
+
+**Clerk en EC2 usa la instancia de desarrollo** (`pk_test_`, por eso se ve la marca *Development mode*): funciona en cualquier dirección, sin proxy ni clave secreta (`CLERK_SECRET_KEY` no está en el servidor). La instancia de producción está ligada al dominio de Vercel.
 
 ## 6. Problemas de despliegue (añadir cuando ocurran)
 

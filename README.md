@@ -39,7 +39,7 @@
 |---|---|---|
 | **Proceso** | Construcción manual e incremental del equipo | Proyecto nuevo desde cero con **GitHub Spec Kit** + asistencia de IA |
 | **Identidad** | Sin Clerk | **Clerk** (acceso con Google, modal en la misma SPA, token verificado en backend) |
-| **Despliegue** | **Vercel** (frontend y backend) | **Vercel** (frontend, API y Clerk) + **Docker en AWS EC2** (pendiente) |
+| **Despliegue** | **Vercel** (frontend y backend) | **Vercel** (frontend, API y Clerk) + **Docker en AWS EC2** |
 | **Código** | `app1/` | `app2/` (frontend y backend implementados según la spec) |
 
 ## Estructura del repositorio  
@@ -132,7 +132,7 @@ La suite cubre: entrada válida (una sola llamada al mock), entrada inválida (4
 |---|---|---|---|
 | App 1 | Vercel | ACABADA | https://planificador-itinerarios-iota.vercel.app/ |
 | App 2 | Vercel | [planificador-itinerarios.vercel.app](https://planificador-itinerarios.vercel.app/) | ✅ H10 — web y API desplegadas; prueba autenticada confirmada |
-| App 2 | EC2 (Docker, HTTPS) | _(pendiente)_ | ⬜ H11 |
+| App 2 | EC2 (Docker, HTTPS) | [107-20-112-76.sslip.io](https://107-20-112-76.sslip.io/) | ✅ H11 — responde mientras el Learner Lab esté iniciado |
 
 ## Documentación
 
@@ -174,7 +174,7 @@ H0 inicio · H1 backend mínimo · H2 contrato y errores · H3 pruebas · H4 fro
 |---|---|---|
 | **Process** | Manual and incremental team construction | Brand new project from scratch using **GitHub Spec Kit** + AI assistance |
 | **Identity** | Without Clerk | **Clerk** (Google authentication, modal inside the SPA, token verified in backend) |
-| **Deployment** | **Vercel** (frontend and backend) | **Vercel** (frontend, API, and Clerk) + **Docker on AWS EC2** (pending) |
+| **Deployment** | **Vercel** (frontend and backend) | **Vercel** (frontend, API, and Clerk) + **Docker on AWS EC2** |
 | **Code** | `app1/` | `app2/` (frontend and backend implemented according to specs) |
 
 ## Repository Structure
@@ -227,4 +227,4 @@ The test suite validates: valid input (single mock call), invalid input (422 sta
 |---|---|---|---|
 | App 1 | Vercel | COMPLETED | https://planificador-itinerarios-iota.vercel.app/ |
 | App 2 | Vercel | [planificador-itinerarios.vercel.app](https://planificador-itinerarios.vercel.app/) | ✅ H10 — Web & API deployed; authenticated test confirmed |
-| App 2 | EC2 (Docker, HTTPS) | _(Pending)_ | ⬜ H11 |
+| App 2 | EC2 (Docker, HTTPS) | [107-20-112-76.sslip.io](https://107-20-112-76.sslip.io/) | ✅ H11 — available while the Learner Lab session is running |
