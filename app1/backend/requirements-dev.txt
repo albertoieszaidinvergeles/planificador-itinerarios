@@ -2,4 +2,4 @@
 # así que pytest no viaja a producción.
 # -r incluye todo lo de requirements.txt para no repetirlo.
 -r requirements.txt
-pytest==9.1.1
+pytest==9.2.0
