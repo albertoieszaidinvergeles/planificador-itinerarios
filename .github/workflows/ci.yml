@@ -38,7 +38,7 @@ jobs:
       AI_TIMEOUT: "20"
     steps:
       - name: Checkout / Obtener el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Python 3.13
         uses: actions/setup-python@v5
         with:
@@ -64,7 +64,7 @@ jobs:
       AI_TIMEOUT: "20"
     steps:
       - name: Checkout / Obtener el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Python 3.13
         uses: actions/setup-python@v5
         with:
@@ -90,7 +90,7 @@ jobs:
         working-directory: ${{ matrix.app }}/frontend
     steps:
       - name: Checkout / Obtener el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout / Obtener el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Python 3.13
         uses: actions/setup-python@v5
         with:
