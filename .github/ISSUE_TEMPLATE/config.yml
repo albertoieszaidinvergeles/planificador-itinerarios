@@ -1,0 +1,11 @@
+# Configuración de los issues / Issue configuration
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+
+blank_issues_enabled: true
+contact_links:
+  - name: "README del proyecto / Project README"
+    url: "https://github.com/albertoieszaidinvergeles/planificador-itinerarios/blob/main/README.md"
+    about: "Instalación, pruebas y URLs antes de abrir un issue / Setup, tests, and URLs before opening an issue"
+  - name: "Regla de alcance y guía de contribución / Scope rule and contributing guide"
+    url: "https://github.com/albertoieszaidinvergeles/planificador-itinerarios/blob/main/CONTRIBUTING.md"
+    about: "Qué se puede y qué no se puede proponer / What you can and cannot propose"

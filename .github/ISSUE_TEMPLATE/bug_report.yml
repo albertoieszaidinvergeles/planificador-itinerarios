@@ -1,0 +1,82 @@
+# Plantillas de issues / Issue templates
+# Formularios de GitHub en español e inglés / GitHub issue forms in Spanish and English.
+
+name: "🐛 Informe de error / Bug report"
+description: "Reporta un fallo en App 1, App 2 o la documentación / Report a bug in App 1, App 2, or the docs"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por avisar. **No incluyas claves secretas** (`AI_API_KEY`, `CLERK_SECRET_KEY`,
+        valores reales de `.env`): las claves publicables de Vercel/Clerk sí son públicas.
+
+        Thanks for the report. **Never include secrets** (`AI_API_KEY`, `CLERK_SECRET_KEY`, real
+        `.env` values): Vercel/Clerk publishable keys are public by design.
+  - type: dropdown
+    id: app
+    attributes:
+      label: "Aplicación / Application"
+      description: "¿Dónde ocurre el fallo? / Where does the bug happen?"
+      options:
+        - "App 1 (sin Clerk / no Clerk)"
+        - "App 2 (con Clerk / with Clerk)"
+        - "Ambas / Both"
+        - "Documentación / Documentation"
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: "URL afectada / Affected URL"
+      description: "Si el fallo ocurre en un despliegue, pega la URL / If it happens on a deployment, paste the URL"
+      placeholder: "https://planificador-itinerarios.vercel.app/"
+  - type: textarea
+    id: pasos
+    attributes:
+      label: "Pasos para reproducirlo / Steps to reproduce"
+      description: "Sé lo más concreto posible / Be as specific as possible"
+      value: |
+        1. Abro la aplicación y relleno el formulario con …
+        2. Pulso «Generar plan» y …
+        3. Veo el error …
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: "Resultado esperado / Expected result"
+      value: "Debería mostrar un plan de un día en la misma pantalla / It should show a one-day plan on the same screen"
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: "Resultado real / Actual result"
+      description: "Incluye el código de estado HTTP si lo ves (p. ej. 422, 502, 504) / Include the HTTP status code if you see one (e.g. 422, 502, 504)"
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: "Entorno / Environment"
+      description: "Navegador y sistema, o dónde corre (Vercel, EC2, local) / Browser and OS, or where it runs (Vercel, EC2, local)"
+      placeholder: "Firefox 142 · Windows 11 · https://107-20-112-76.sslip.io/"
+  - type: textarea
+    id: extras
+    attributes:
+      label: "Capturas o información extra / Screenshots or extra info"
+      description: "Arrastra y suelta imágenes aquí si puedes (sin datos personales ni claves) / Drag and drop images here if you can (no personal data or keys)"
+  - type: checkboxes
+    id: comprobaciones
+    attributes:
+      label: "Comprobaciones / Checks"
+      options:
+        - label: "He buscado issues abiertas o cerradas similares / I searched for similar open or closed issues"
+          required: true
+        - label: "Este issue no contiene secretos ni datos personales / This issue contains no secrets or personal data"
+          required: true
+        - label: "He leído la regla de alcance en CONTRIBUTING.md / I read the scope rule in CONTRIBUTING.md"
+          required: true

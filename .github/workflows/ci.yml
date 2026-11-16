@@ -1,0 +1,116 @@
+# CI · integración continua / continuous integration
+# Ejecuta en cada PR y en cada push a main:
+#   1. Pruebas del backend de App 1 y App 2 (pytest, sin red)
+#   2. Build de los frontends de App 1 y App 2 (Vite)
+#   3. Comprobación de enlaces relativos y anclas del Markdown
+# Runs on every PR and every push to main:
+#   1. Backend tests for App 1 and App 2 (pytest, offline)
+#   2. Frontend builds for App 1 and App 2 (Vite)
+#   3. Markdown relative-link and anchor check
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-app1:
+    name: Backend App 1 · pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app1/backend
+    env:
+      # Las pruebas usan la IA simulada; estos valores solo evitan importar sin .env.
+      # Tests use the mocked AI; these values only avoid importing without .env.
+      AI_API_KEY: "ci-dummy-key"
+      AI_MODEL: "ci-dummy-model"
+      AI_TIMEOUT: "20"
+    steps:
+      - name: Checkout / Obtener el código
+        uses: actions/checkout@v4
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            app1/backend/requirements.txt
+            app1/backend/requirements-dev.txt
+      - name: Instalar dependencias / Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: pytest · App 1
+        run: python -m pytest -v
+
+  backend-app2:
+    name: Backend App 2 · pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app2/backend
+    env:
+      AI_API_KEY: "ci-dummy-key"
+      AI_MODEL: "ci-dummy-model"
+      AI_TIMEOUT: "20"
+    steps:
+      - name: Checkout / Obtener el código
+        uses: actions/checkout@v4
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            app2/backend/requirements.txt
+            app2/backend/requirements-dev.txt
+      - name: Instalar dependencias / Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: pytest · App 2
+        run: python -m pytest -v
+
+  frontends:
+    name: Frontend ${{ matrix.app }} · build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app1, app2]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}/frontend
+    steps:
+      - name: Checkout / Obtener el código
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/frontend/package-lock.json
+      - name: Instalar dependencias / Install dependencies
+        run: npm ci
+      - name: Build de producción / Production build
+        run: npm run build
+
+  docs-links:
+    name: Docs · enlaces / links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout / Obtener el código
+        uses: actions/checkout@v4
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Comprobar enlaces y anclas del Markdown / Check Markdown links and anchors
+        run: python .github/scripts/check_markdown_links.py

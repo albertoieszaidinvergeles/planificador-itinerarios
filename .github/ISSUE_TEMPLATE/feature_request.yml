@@ -1,0 +1,58 @@
+# Plantilla de ideas / Feature request template
+# Formulario de GitHub en español e inglés / GitHub issue form in Spanish and English.
+
+name: "💡 Propuesta de mejora / Feature request"
+description: "Sugiere una mejora dentro del alcance del enunciado / Suggest an improvement within the assignment scope"
+title: "[Idea]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Regla de alcance:** una sola pantalla, un solo formulario, una sola función útil y una
+        sola API de IA. **Cero persistencia**, sin CRUD y sin pantallas adicionales
+        (ver [`CONTRIBUTING.md`](https://github.com/albertoieszaidinvergeles/planificador-itinerarios/blob/main/CONTRIBUTING.md)).
+
+        **Scope rule:** one screen, one form, one useful function, one AI API. **Zero
+        persistence**, no CRUD, no extra screens (see [`CONTRIBUTING.md`](https://github.com/albertoieszaidinvergeles/planificador-itinerarios/blob/main/CONTRIBUTING.md)).
+  - type: dropdown
+    id: app
+    attributes:
+      label: "Aplicación / Application"
+      options:
+        - "App 1 (sin Clerk / no Clerk)"
+        - "App 2 (con Clerk / with Clerk)"
+        - "Ambas / Both"
+        - "Documentación o repositorio / Documentation or repository"
+      default: 3
+    validations:
+      required: true
+  - type: textarea
+    id: problema
+    attributes:
+      label: "Problema o necesidad / Problem or need"
+      description: "¿Qué te gustaría resolver? / What would you like to solve?"
+      value: "Como visitante de una ciudad, quiero … para … / As a city visitor, I want … so that …"
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: "Propuesta / Proposal"
+      description: "Describe el cambio concreto que harías / Describe the concrete change you would make"
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: "Alternativas consideradas / Alternatives considered"
+      description: "Otras formas de resolverlo sin romper el alcance / Other ways to solve it without breaking the scope"
+  - type: checkboxes
+    id: alcance
+    attributes:
+      label: "Regla de alcance / Scope rule"
+      options:
+        - label: "La propuesta respeta la regla de alcance: una pantalla, una API de IA, cero persistencia, sin pantallas adicionales / The proposal respects the scope rule: one screen, one AI API, zero persistence, no extra screens"
+          required: true
+        - label: "He buscado si ya existe una issue equivalente / I checked whether an equivalent issue already exists"
+          required: true

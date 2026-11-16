@@ -56,7 +56,7 @@ innecesarias.
 |---|---|---|---|
 | Respuesta de ~14 s con un timeout de 20 s: poco margen | Prueba real H1 | En H2, medir con el razonamiento del modelo desactivado; si no basta, subir `AI_TIMEOUT` y actualizar la ERS | Cerrado 14/10/2026: ~5 s con el razonamiento desactivado; se mantiene `AI_TIMEOUT=20` |
 | Elegir modelo `:free` definitivo y comprobar su cuota | Fase backend (H1) | Probar con petición real manual y documentar en `docs/pruebas.md` | Cerrado 13/10/2026: `nvidia/nemotron-3-super-120b-a12b:free`. **Reabierto 29/10/2026** porque OpenRouter lo dejó de ofrecer en gratis; cerrado de nuevo con `nvidia/nemotron-3.5-lightning:free` (ver Registro) |
-| **`AI_MODEL` en producción (Vercel) sin actualizar** → App 1 en `502` | Retiro del modelo `:free` el 29/10 | Cambiar la variable `AI_MODEL` en el panel de Vercel (Settings → Environment Variables) a `nvidia/nemotron-3.5-lightning:free` y redeployar | **Abierto. Bloqueante: la App 1 no genera planes en producción hasta que se cambie** |
+| **`AI_MODEL` en producción (Vercel) sin actualizar** → App 1 en `502` | Retiro del modelo `:free` el 29/10 | Cambiar la variable `AI_MODEL` en el panel de Vercel (Settings → Environment Variables) a `nvidia/nemotron-3.5-lightning:free` y redeployar | **Cerrado 16/11/2026**: variable actualizada en Vercel; petición real a `POST /api/plan` en producción → `200` con plan de Sevilla (verificación manual el 16/11/2026) |
 | Configurar CORS/Vercel para que frontend y backend se encuentren | Fase H7 | Dos proyectos de Vercel con `VITE_API_BASE_URL` y origen permitido | Abierto |
 | | | | |
 

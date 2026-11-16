@@ -1,0 +1,50 @@
+# Plantilla de documentación / Documentation template
+# Formulario de GitHub en español e inglés / GitHub issue form in Spanish and English.
+
+name: "📚 Documentación / Documentation"
+description: "Informa de un error, un enlace roto o una mejora en la documentación / Report a doc error, broken link, or docs improvement"
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Este repositorio vive de su documentación (README, ERS, `docs/`): si algo no cuadra,
+        avísanos.
+
+        This repository runs on its documentation (README, SRS, `docs/`): if something does not
+        add up, let us know.
+  - type: input
+    id: documento
+    attributes:
+      label: "Documento afectado / Affected document"
+      description: "Ruta del archivo / File path"
+      placeholder: "docs/pruebas.md"
+    validations:
+      required: true
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: "Tipo / Type"
+      options:
+        - "Error factual / Factual error"
+        - "Enlace roto / Broken link"
+        - "Falta información / Missing information"
+        - "Mejora de claridad o traducción / Clarity or translation improvement"
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: detalle
+    attributes:
+      label: "Detalle / Details"
+      description: "Qué dice ahora y qué debería decir / What it says now and what it should say"
+    validations:
+      required: true
+  - type: checkboxes
+    id: comprobaciones
+    attributes:
+      label: "Comprobaciones / Checks"
+      options:
+        - label: "He comprobado que el enlace o la sección existe en la rama principal / I checked the link or section exists on the main branch"
+          required: true
